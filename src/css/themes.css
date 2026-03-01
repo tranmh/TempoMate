@@ -1,0 +1,121 @@
+/* ============================================
+   TempoMate Theme System
+   Dark/Light mode with Red accent
+   ============================================ */
+
+:root {
+  /* Red accent */
+  --accent: #c41e3a;
+  --accent-hover: #a01830;
+  --accent-light: #e85d73;
+
+  /* Transition for theme changes */
+  --theme-transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* ===== Light Theme ===== */
+:root,
+[data-theme="light"] {
+  --bg-primary: #f8f9fa;
+  --bg-secondary: #ffffff;
+  --bg-clock: #ffffff;
+  --bg-clock-active: #e8f5e9;
+  --bg-clock-paused: #fff8e1;
+  --bg-clock-frozen: #fce4ec;
+  --bg-toolbar: #ffffff;
+  --bg-overlay: rgba(0, 0, 0, 0.5);
+  --bg-settings: #ffffff;
+  --bg-card: #f5f5f5;
+  --bg-card-hover: #eeeeee;
+  --bg-input: #ffffff;
+
+  --text-primary: #1a1a1a;
+  --text-secondary: #666666;
+  --text-muted: #999999;
+  --text-time: #1a1a1a;
+  --text-time-active: #1a1a1a;
+  --text-time-low: #e65100;
+  --text-time-expired: #c41e3a;
+  --text-on-accent: #ffffff;
+
+  --border-color: #e0e0e0;
+  --border-focus: #c41e3a;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+
+  --flag-color: #c41e3a;
+  --icon-color: #666666;
+  --icon-active: #c41e3a;
+
+  /* LCD Display — sage-green LCD, high contrast for outdoor/sunlight use */
+  --lcd-bg: #c8d2b8;
+  --lcd-text: #1c2b1c;
+  --lcd-text-active: #0a1a0a;
+  --lcd-ghost: #c8d2b8;
+  --lcd-divider: rgba(28, 43, 28, 0.2);
+  --lcd-bezel-outer: #787878;
+  --lcd-bezel-inner: #606060;
+  --lcd-accent-line: #c41e3a;
+  --led-active: #4caf50;
+  --led-paused: #f9a825;
+  --led-frozen: #ef5350;
+  --led-off: rgba(28, 43, 28, 0.15);
+  --lcd-panel-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.15), inset 0 0 16px rgba(0, 0, 0, 0.06);
+  --lcd-bezel-shadow: 0 2px 8px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.1);
+  --lcd-bezel-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+/* ===== Dark Theme ===== */
+[data-theme="dark"] {
+  --bg-primary: #121212;
+  --bg-secondary: #1e1e1e;
+  --bg-clock: #1e1e1e;
+  --bg-clock-active: #1b3a1e;
+  --bg-clock-paused: #3a3520;
+  --bg-clock-frozen: #3a1e1e;
+  --bg-toolbar: #1e1e1e;
+  --bg-overlay: rgba(0, 0, 0, 0.7);
+  --bg-settings: #1e1e1e;
+  --bg-card: #2a2a2a;
+  --bg-card-hover: #333333;
+  --bg-input: #2a2a2a;
+
+  --text-primary: #e0e0e0;
+  --text-secondary: #aaaaaa;
+  --text-muted: #777777;
+  --text-time: #e0e0e0;
+  --text-time-active: #ffffff;
+  --text-time-low: #ff9800;
+  --text-time-expired: #ef5350;
+  --text-on-accent: #ffffff;
+
+  --border-color: #333333;
+  --border-focus: #c41e3a;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+
+  --flag-color: #ef5350;
+  --icon-color: #aaaaaa;
+  --icon-active: #ef5350;
+
+  /* LCD Display — backlit LCD for indoor/night use */
+  --lcd-bg: #0c0e0c;
+  --lcd-text: #c8d8c0;
+  --lcd-text-active: #e0f0d8;
+  --lcd-ghost: #0c0e0c;
+  --lcd-divider: rgba(200, 216, 192, 0.12);
+  --lcd-bezel-outer: #2a2a2a;
+  --lcd-bezel-inner: #1a1a1a;
+  --lcd-accent-line: #c41e3a;
+  --led-active: #4caf50;
+  --led-paused: #f9a825;
+  --led-frozen: #ef5350;
+  --led-off: rgba(200, 216, 192, 0.1);
+  --lcd-panel-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.6), inset 0 0 20px rgba(0, 0, 0, 0.3);
+  --lcd-bezel-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --lcd-bezel-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}

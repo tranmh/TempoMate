@@ -1,0 +1,25 @@
+{
+  "name": "tempomate",
+  "version": "1.0.0",
+  "description": "A modern chess clock with advanced timing features - vanilla JavaScript",
+  "private": true,
+  "scripts": {
+    "dev": "npx serve src",
+    "build": "node build.js",
+    "test": "node --experimental-vm-modules node_modules/.bin/jest --config jest.config.js",
+    "test:watch": "node --experimental-vm-modules node_modules/.bin/jest --config jest.config.js --watch",
+    "test:e2e": "npx playwright test",
+    "test:all": "npm test && npm run test:e2e"
+  },
+  "devDependencies": {
+    "@jest/globals": "^29.7.0",
+    "@playwright/test": "^1.45.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "serve": "^14.2.0"
+  },
+  "type": "module",
+  "dependencies": {
+    "nosleep.js": "^0.12.0"
+  }
+}

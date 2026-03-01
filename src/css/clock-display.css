@@ -1,0 +1,367 @@
+/* ============================================
+   Clock Display Styles - LCD Theme
+   ============================================ */
+
+/* ===== Digital Clock Fonts ===== */
+@font-face {
+  font-family: 'DSEG7 Classic';
+  src: url('../fonts/DSEG7Classic-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'DSEG7 Modern';
+  src: url('../fonts/DSEG7Modern-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Orbitron';
+  src: url('../fonts/Orbitron-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Digital-7';
+  src: url('../fonts/Digital7-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ===== LCD Bezel (physical casing) ===== */
+.lcd-bezel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  background: linear-gradient(145deg, var(--lcd-bezel-outer), var(--lcd-bezel-inner));
+  border-radius: 14px;
+  padding: 6px;
+  box-shadow:
+    var(--lcd-bezel-shadow),
+    var(--lcd-bezel-highlight);
+  border: 3px solid var(--lcd-accent-line);
+}
+
+/* ===== Unified LCD Panel ===== */
+.clock-container {
+  display: flex;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  background: var(--lcd-bg);
+  border-radius: 8px 8px 0 0;
+  box-shadow: var(--lcd-panel-shadow);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Vertical divider between left/right clocks */
+.clock-container::after {
+  content: '';
+  position: absolute;
+  top: 12%;
+  bottom: 12%;
+  left: 50%;
+  width: 1px;
+  background: var(--lcd-divider);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* ===== Clock Face (transparent region within LCD) ===== */
+.clock-face {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 16px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: background 0.2s ease;
+  position: relative;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.clock-face:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.clock-face:active {
+  transform: scale(0.98);
+}
+
+/* Active state: subtle LCD tint, no background color change */
+.clock-face.active {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.clock-face.paused {
+  background: transparent;
+  border: none;
+}
+
+.clock-face.frozen {
+  background: transparent;
+  border: none;
+  cursor: not-allowed;
+}
+
+/* ===== Clock Header (flag + LED + color) ===== */
+.clock-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 8px;
+  min-height: 24px;
+}
+
+/* ===== LED Indicator ===== */
+.led-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--led-off);
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+  flex-shrink: 0;
+}
+
+.active .led-indicator {
+  background: var(--led-active);
+  box-shadow: 0 0 6px var(--led-active), 0 0 12px rgba(76, 175, 80, 0.3);
+}
+
+.paused .led-indicator {
+  background: var(--led-paused);
+  box-shadow: 0 0 6px var(--led-paused), 0 0 12px rgba(249, 168, 37, 0.3);
+}
+
+.frozen .led-indicator {
+  background: var(--led-frozen);
+  box-shadow: 0 0 6px var(--led-frozen), 0 0 12px rgba(239, 83, 80, 0.3);
+}
+
+/* ===== Time Display Wrapper (for ghost segments) ===== */
+.time-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ===== Ghost Segments (unlit LCD segments) ===== */
+.clock-ghost {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--clock-font, 'DSEG7 Classic'), 'SF Mono', 'Cascadia Mono', 'Fira Code', 'Consolas', 'Courier New', monospace;
+  font-size: 5rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--lcd-ghost);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ===== Time Display ===== */
+.clock-time {
+  font-family: var(--clock-font, 'DSEG7 Classic'), 'SF Mono', 'Cascadia Mono', 'Fira Code', 'Consolas', 'Courier New', monospace;
+  font-size: 5rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--lcd-text);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  transition: color 0.2s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.active .clock-time {
+  color: var(--lcd-text-active);
+}
+
+.clock-time.time-low {
+  color: var(--text-time-low);
+}
+
+.clock-time.time-expired {
+  color: var(--text-time-expired);
+}
+
+/* ===== Clock Footer ===== */
+.clock-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-top: 8px;
+  min-height: 20px;
+  font-size: 0.85rem;
+  color: var(--lcd-text);
+  opacity: 0.6;
+}
+
+/* ===== Flag Indicator ===== */
+.clock-flag {
+  font-size: 1.5rem;
+  color: var(--flag-color);
+  transition: opacity 0.2s ease;
+}
+
+.flag-hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.flag-solid {
+  opacity: 1;
+  visibility: visible;
+}
+
+.flag-blinking {
+  opacity: 1;
+  visibility: visible;
+  animation: flag-blink 0.5s ease-in-out infinite;
+}
+
+@keyframes flag-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
+}
+
+/* ===== Color Indicator (chess piece) ===== */
+.clock-color {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--lcd-text);
+  opacity: 0.5;
+}
+
+.piece-white {
+  background: transparent;
+}
+
+.piece-black {
+  background: var(--lcd-text);
+}
+
+/* ===== Move Count ===== */
+.clock-moves {
+  font-size: 0.85rem;
+  color: var(--lcd-text);
+  opacity: 0.6;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== Byo-yomi Moments ===== */
+.clock-byo {
+  font-size: 0.85rem;
+  color: var(--lcd-accent-line);
+  font-weight: 600;
+}
+
+/* ===== Utility ===== */
+.hidden {
+  display: none !important;
+}
+
+/* ===== Responsive: Portrait (stacked) ===== */
+@media (max-width: 600px) and (orientation: portrait) {
+  .clock-container {
+    flex-direction: column;
+  }
+
+  /* Vertical divider becomes horizontal in portrait */
+  .clock-container::after {
+    top: auto;
+    bottom: auto;
+    left: 12%;
+    right: 12%;
+    top: 50%;
+    width: auto;
+    height: 1px;
+  }
+
+  .clock-face {
+    padding: 12px;
+  }
+
+  /* Rotate left clock 180 degrees so opposing player can read it */
+  .clock-left {
+    transform: rotate(180deg);
+  }
+
+  .clock-left.active {
+    transform: rotate(180deg) scale(1);
+  }
+
+  .clock-left:active {
+    transform: rotate(180deg) scale(0.98);
+  }
+}
+
+/* ===== Rotated override in portrait: keep side-by-side layout ===== */
+@media (max-width: 600px) and (orientation: portrait) {
+  #app.rotated .clock-container {
+    flex-direction: row;
+  }
+
+  /* Restore vertical divider */
+  #app.rotated .clock-container::after {
+    left: 50%;
+    right: auto;
+    top: 12%;
+    bottom: 12%;
+    width: 1px;
+    height: auto;
+  }
+
+  /* Remove 180° rotation — whole UI is rotated instead */
+  #app.rotated .clock-left {
+    transform: none;
+  }
+
+  #app.rotated .clock-left.active {
+    transform: none;
+  }
+
+  #app.rotated .clock-left:active {
+    transform: scale(0.98);
+  }
+}
+
+/* ===== Responsive: Landscape ===== */
+@media (orientation: landscape) and (max-height: 500px) {
+  .clock-face {
+    padding: 8px;
+  }
+
+  .clock-header,
+  .clock-footer {
+    margin: 4px 0;
+  }
+}
