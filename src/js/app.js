@@ -19,7 +19,7 @@ import { RotationManager } from './ui/RotationManager.js';
 import { InputHandler } from './input/InputHandler.js';
 import { StorageManager } from './storage/StorageManager.js';
 import { getPreset } from './presets/presets.js';
-import { GameStatus, Player, FlagState, TimingMethodType, CLOCK_FONTS, Limits } from './utils/constants.js';
+import { GameStatus, Player, FlagState, TimingMethodType, CLOCK_FONTS, Limits, ClockFaceStyle } from './utils/constants.js';
 import { WakeLockManager } from './utils/WakeLockManager.js';
 
 export class App {
@@ -74,10 +74,19 @@ export class App {
     this.settingsPanel.setCallbacks(
       (config, optionNumber) => this._selectOption(config, optionNumber),
       () => {},
+      (styleId) => this._setClockFace(styleId),
     );
 
     // Set up timer engine
     this.timerEngine.setTickCallback(this._onTick);
+
+    // Load saved clock face style
+    const savedFace = StorageManager.loadClockFace();
+    if (savedFace !== ClockFaceStyle.DIGITAL) {
+      this.clockDisplay.setClockFaceStyle(savedFace);
+      // Re-bind clock faces after rebuild
+      this._rebindClockFaces();
+    }
 
     // Load saved clock font
     const savedFontId = StorageManager.loadFont();
@@ -543,6 +552,24 @@ export class App {
       btn.textContent = icons[newTheme] || '\u25D0';
       btn.title = `Theme: ${newTheme}`;
     }
+  }
+
+  /**
+   * Set the clock face style.
+   * @param {string} styleId - ClockFaceStyle value
+   */
+  _setClockFace(styleId) {
+    this.clockDisplay.setClockFaceStyle(styleId);
+    this._rebindClockFaces();
+    this._updateDisplay();
+  }
+
+  /**
+   * Re-bind clock face elements to the input handler after a renderer swap.
+   */
+  _rebindClockFaces() {
+    const faces = this.clockDisplay.getClockFaces();
+    this.inputHandler.bindClockFaces(faces.left, faces.right);
   }
 
   /**

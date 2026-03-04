@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>TempoMate - Chess Clock</title>
-          <style>
+            <style>
 /* --- css/themes.css --- */
 /* ============================================
    TempoMate Theme System
@@ -1332,6 +1332,442 @@ body {
     padding: 10px;
   }
 }
+
+/* --- css/analog-clock.css --- */
+/* ============================================
+   Analog Clock Styles - Garde & Insa
+   ============================================ */
+
+/* ===== Shared Analog Base ===== */
+.analog-clock {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.analog-svg {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+/* Hide digital divider in analog mode */
+.clock-container.analog-mode::after {
+  display: none;
+}
+
+/* ===== Hidden utility for SVG elements ===== */
+.analog-svg .hidden {
+  display: none;
+}
+
+/* ============================================
+   Garde - Classic German Precision Clock
+   Ref: Garde Classic — light beech wood, white
+   dial, black hands, black numerals, red Klappe,
+   red seconds marker at 3 o'clock.
+   ============================================ */
+
+/* Wood housing: light beech with grain texture */
+.garde-housing {
+  fill: #c8a876;
+  stroke: #9e7e52;
+  stroke-width: 1.5;
+}
+
+/* Subtle wood-grain overlay via repeating stripes */
+.garde-clock .garde-housing {
+  fill: #c8a876;
+  filter: url(#garde-grain);
+}
+
+/* Dial: clean white */
+.garde-dial {
+  fill: #ffffff;
+  stroke: #1a1a1a;
+  stroke-width: 1.5;
+}
+
+/* Dial border ring: thin black, glows green when active */
+.garde-dial-border {
+  fill: none;
+  stroke: #1a1a1a;
+  stroke-width: 1.5;
+  transition: stroke 0.3s ease, filter 0.3s ease;
+}
+
+.garde-dial-active {
+  stroke: #4caf50;
+  filter: drop-shadow(0 0 4px rgba(76, 175, 80, 0.4));
+}
+
+/* Hour markers: black, prominent */
+.garde-marker-hour {
+  stroke: #000;
+  stroke-width: 2.2;
+  stroke-linecap: butt;
+}
+
+/* Minute markers: thin black ticks */
+.garde-marker-minute {
+  stroke: #000;
+  stroke-width: 0.7;
+  stroke-linecap: butt;
+}
+
+/* Red seconds/time marker at 3 o'clock */
+.garde-sec-marker {
+  fill: #cc0000;
+}
+
+/* Numerals: elegant serif, black */
+.garde-numerals text {
+  font-family: 'Georgia', 'Times New Roman', 'Palatino Linotype', serif;
+  font-size: 14px;
+  font-weight: 400;
+  fill: #000;
+}
+
+/* Hands: black, slim */
+.garde-hand-hour {
+  stroke: #000;
+  stroke-width: 2.8;
+  stroke-linecap: round;
+  transition: stroke 0.2s ease;
+}
+
+.garde-hand-minute {
+  stroke: #000;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  transition: stroke 0.2s ease;
+}
+
+/* Seconds hand: red, thin, ticking */
+.garde-hand-seconds {
+  stroke: #cc0000;
+  stroke-width: 1;
+  stroke-linecap: round;
+}
+
+/* Center pin: black */
+.garde-pin {
+  fill: #111;
+  stroke: #000;
+  stroke-width: 0.5;
+}
+
+/* Red flag / Klappe (wedge between 11-12) */
+.garde-flag {
+  fill: #cc0000;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.garde-flag.flag-raised {
+  opacity: 0.9;
+}
+
+.garde-flag.flag-fallen {
+  opacity: 0.25;
+}
+
+.garde-flag.flag-fallen-blink {
+  opacity: 0.25;
+  animation: analog-flag-blink 0.5s ease-in-out infinite;
+}
+
+/* LED indicator */
+.garde-led {
+  fill: #888;
+  transition: fill 0.2s ease, filter 0.2s ease;
+}
+
+.garde-led.led-active {
+  fill: #4caf50;
+  filter: drop-shadow(0 0 4px rgba(76, 175, 80, 0.6));
+}
+
+.garde-led.led-paused {
+  fill: #f9a825;
+  filter: drop-shadow(0 0 4px rgba(249, 168, 37, 0.6));
+}
+
+.garde-led.led-frozen {
+  fill: #ef5350;
+  filter: drop-shadow(0 0 4px rgba(239, 83, 80, 0.6));
+}
+
+/* Color indicator */
+.garde-color-indicator {
+  stroke: #333;
+  stroke-width: 1.5;
+  fill: none;
+}
+
+.garde-color-indicator.piece-white {
+  fill: none;
+}
+
+.garde-color-indicator.piece-black {
+  fill: #111;
+}
+
+/* Info text */
+.garde-info-text {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 8px;
+  fill: #333;
+}
+
+/* Low time: hands turn orange */
+.garde-hand-hour.hand-low,
+.garde-hand-minute.hand-low {
+  stroke: #e65100;
+}
+
+/* Expired: hands turn red */
+.garde-hand-hour.hand-expired,
+.garde-hand-minute.hand-expired {
+  stroke: #cc0000;
+}
+
+/* ============================================
+   Insa - Yugoslav Tournament Clock
+   ============================================ */
+
+/* Wood housing: darker walnut */
+.insa-housing {
+  fill: #6b4226;
+  stroke: #4a2d15;
+  stroke-width: 2;
+}
+
+/* Brass trim */
+.insa-trim {
+  fill: none;
+  stroke: #b8860b;
+  stroke-width: 1.5;
+}
+
+/* Dial: off-white */
+.insa-dial {
+  fill: #f5f0e0;
+  stroke: #b8860b;
+  stroke-width: 1.5;
+}
+
+.insa-dial-border {
+  fill: none;
+  stroke: #b8860b;
+  stroke-width: 2;
+  transition: stroke 0.3s ease, filter 0.3s ease;
+}
+
+.insa-dial-active {
+  stroke: #4caf50;
+  filter: drop-shadow(0 0 5px rgba(76, 175, 80, 0.5));
+}
+
+/* Hour markers: bolder */
+.insa-marker-hour {
+  stroke: #222;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+
+.insa-marker-minute {
+  stroke: #888;
+  stroke-width: 1;
+  stroke-linecap: round;
+}
+
+/* Numerals: bold sans-serif */
+.insa-numerals text {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  fill: #222;
+}
+
+/* Hands: thicker than Garde */
+.insa-hand-hour {
+  stroke: #111;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  transition: stroke 0.2s ease;
+}
+
+.insa-hand-minute {
+  stroke: #222;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  transition: stroke 0.2s ease;
+}
+
+/* Center pin: larger, brass */
+.insa-pin {
+  fill: #b8860b;
+  stroke: #8b6914;
+  stroke-width: 0.8;
+}
+
+/* Red flag */
+.insa-flag {
+  fill: #c41e3a;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.insa-flag.flag-raised {
+  opacity: 0.85;
+}
+
+.insa-flag.flag-fallen {
+  opacity: 0.3;
+}
+
+.insa-flag.flag-fallen-blink {
+  opacity: 0.3;
+  animation: analog-flag-blink 0.5s ease-in-out infinite;
+}
+
+/* Oscillating bar */
+.insa-oscillator {
+  fill: #b8860b;
+  transform-origin: 100px 191px;
+  transition: opacity 0.3s ease;
+}
+
+.insa-oscillator.oscillating {
+  animation: oscillate 1s ease-in-out infinite;
+}
+
+/* LED indicator */
+.insa-led {
+  fill: #555;
+  transition: fill 0.2s ease, filter 0.2s ease;
+}
+
+.insa-led.led-active {
+  fill: #4caf50;
+  filter: drop-shadow(0 0 4px rgba(76, 175, 80, 0.6));
+}
+
+.insa-led.led-paused {
+  fill: #f9a825;
+  filter: drop-shadow(0 0 4px rgba(249, 168, 37, 0.6));
+}
+
+.insa-led.led-frozen {
+  fill: #ef5350;
+  filter: drop-shadow(0 0 4px rgba(239, 83, 80, 0.6));
+}
+
+/* Color indicator */
+.insa-color-indicator {
+  stroke: #555;
+  stroke-width: 1.5;
+  fill: none;
+}
+
+.insa-color-indicator.piece-white {
+  fill: none;
+}
+
+.insa-color-indicator.piece-black {
+  fill: #333;
+}
+
+/* Info text */
+.insa-info-text {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 8px;
+  fill: #666;
+}
+
+/* Low time / expired hand colors */
+.insa-hand-hour.hand-low,
+.insa-hand-minute.hand-low {
+  stroke: #f9a825;
+}
+
+.insa-hand-hour.hand-expired,
+.insa-hand-minute.hand-expired {
+  stroke: #ef5350;
+}
+
+/* ============================================
+   Animations
+   ============================================ */
+
+@keyframes analog-flag-blink {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 0.15; }
+}
+
+@keyframes oscillate {
+  0%, 100% { transform: rotate(-8deg); }
+  50% { transform: rotate(8deg); }
+}
+
+/* ============================================
+   Dark Theme Overrides
+   ============================================ */
+
+[data-theme="dark"] .garde-housing {
+  fill: #9e7e52;
+}
+
+[data-theme="dark"] .garde-dial {
+  fill: #f0f0f0;
+  stroke: #333;
+}
+
+[data-theme="dark"] .garde-dial-border {
+  stroke: #333;
+}
+
+[data-theme="dark"] .garde-numerals text {
+  fill: #111;
+}
+
+[data-theme="dark"] .garde-marker-hour {
+  stroke: #111;
+}
+
+[data-theme="dark"] .garde-marker-minute {
+  stroke: #333;
+}
+
+[data-theme="dark"] .garde-color-indicator {
+  stroke: #aaa;
+}
+
+[data-theme="dark"] .garde-info-text {
+  fill: #aaa;
+}
+
+[data-theme="dark"] .insa-housing {
+  fill: #4a2d15;
+}
+
+[data-theme="dark"] .insa-dial {
+  fill: #e0dac8;
+}
+
+[data-theme="dark"] .insa-numerals text {
+  fill: #333;
+}
+
+[data-theme="dark"] .insa-color-indicator {
+  stroke: #888;
+}
+
+[data-theme="dark"] .insa-info-text {
+  fill: #888;
+}
   </style>
 </head>
 <body>
@@ -1475,6 +1911,20 @@ const Limits = Object.freeze({
   FLAG_DISPLAY_DURATION_MS: 300000, // 5 minutes
 });
 
+/** Clock face style identifiers */
+const ClockFaceStyle = Object.freeze({
+  DIGITAL: 'digital',
+  GARDE: 'garde',
+  INSA: 'insa',
+});
+
+/** Clock face style display definitions */
+const CLOCK_FACE_STYLES = Object.freeze([
+  { id: ClockFaceStyle.DIGITAL, name: 'Digital LCD' },
+  { id: ClockFaceStyle.GARDE, name: 'Garde (Analog)' },
+  { id: ClockFaceStyle.INSA, name: 'Insa (Analog)' },
+]);
+
 /** Clock font identifiers */
 const ClockFont = Object.freeze({
   DSEG7_CLASSIC: 'dseg7-classic',
@@ -1535,6 +1985,7 @@ const StorageKeys = Object.freeze({
   SOUND_ENABLED: 'tempomate_sound',
   FONT: 'tempomate_font',
   ROTATION: 'tempomate_rotation',
+  CLOCK_FACE: 'tempomate_clock_face',
 });
 
 // --- js/state/PlayerState.js ---
@@ -3040,6 +3491,60 @@ class MoveCounter {
   }
 }
 
+// --- js/ui/renderers/ClockRenderer.js ---
+/**
+ * ClockRenderer - Base class / interface for clock face renderers.
+ *
+ * Each renderer implements a specific visual style for one side of the
+ * clock display (digital LCD, Garde analog, Insa analog, etc.).
+ */
+
+class ClockRenderer {
+  /**
+   * Build the DOM/SVG for this clock face inside the container.
+   * @param {HTMLElement} container - The .clock-face element
+   * @param {string} side - 'left' or 'right'
+   */
+  build(container, side) {
+    // Override in subclasses
+  }
+
+  /**
+   * Update the rendered display with new state.
+   * @param {object} state - Per-side state snapshot
+   * @param {number} state.timeMs - Remaining time in ms
+   * @param {boolean} state.isActive - Whether this side's clock is running
+   * @param {boolean} state.isPaused - Whether this side is paused
+   * @param {boolean} state.isFrozen - Whether this side is frozen
+   * @param {string} state.color - 'white' or 'black'
+   * @param {string} state.flagState - FlagState value
+   * @param {number} state.moves - Move count
+   * @param {boolean} state.showMoves - Whether to display moves
+   * @param {number} [state.byoMoments] - Byo-yomi moments remaining
+   * @param {string} [state.method] - TimingMethodType
+   * @param {string} state.gameStatus - GameStatus value
+   */
+  update(state) {
+    // Override in subclasses
+  }
+
+  /**
+   * Called when the container is resized.
+   * @param {number} width - Container width in px
+   * @param {number} height - Container height in px
+   */
+  onResize(width, height) {
+    // Override in subclasses
+  }
+
+  /**
+   * Clean up resources (event listeners, animations, etc.).
+   */
+  destroy() {
+    // Override in subclasses
+  }
+}
+
 // --- js/utils/TimeFormatter.js ---
 /**
  * TimeFormatter - Converts milliseconds to display strings
@@ -3142,17 +3647,990 @@ function formatTimeShort(ms) {
   return parts.join(' ');
 }
 
+// --- js/ui/renderers/DigitalClockRenderer.js ---
+/**
+ * DigitalClockRenderer - Renders the classic LCD digital clock face.
+ *
+ * Extracted from ClockDisplay. Creates the per-side DOM structure:
+ * header (flag + LED + color), time wrapper (ghost + time), footer (moves + byo).
+ */
+
+
+class DigitalClockRenderer extends ClockRenderer {
+  constructor() {
+    super();
+    this._side = null;
+    this._container = null;
+    this._timeEl = null;
+    this._ghostEl = null;
+    this._flagEl = null;
+    this._colorEl = null;
+    this._movesEl = null;
+    this._byoEl = null;
+    this._ledEl = null;
+    this._textLen = 0;
+
+    // Dirty-checking cache
+    this._prev = {};
+  }
+
+  /**
+   * Build the digital clock face DOM inside the container.
+   * @param {HTMLElement} container - The .clock-face element
+   * @param {string} side - 'left' or 'right'
+   */
+  build(container, side) {
+    this._side = side;
+    this._container = container;
+
+    // Flag indicator
+    const flag = document.createElement('div');
+    flag.className = 'clock-flag flag-hidden';
+    flag.textContent = '\u2691';
+
+    // LED indicator
+    const led = document.createElement('div');
+    led.className = 'led-indicator';
+
+    // Color indicator
+    const color = document.createElement('div');
+    color.className = 'clock-color';
+
+    // Header row
+    const header = document.createElement('div');
+    header.className = 'clock-header';
+    header.appendChild(flag);
+    header.appendChild(led);
+    header.appendChild(color);
+
+    // Time wrapper (ghost + real time)
+    const timeWrapper = document.createElement('div');
+    timeWrapper.className = 'time-wrapper';
+
+    const ghost = document.createElement('div');
+    ghost.className = 'clock-ghost';
+    ghost.textContent = '8:88';
+
+    const time = document.createElement('div');
+    time.className = 'clock-time';
+    time.textContent = '0:00';
+
+    timeWrapper.appendChild(ghost);
+    timeWrapper.appendChild(time);
+
+    // Footer row
+    const footer = document.createElement('div');
+    footer.className = 'clock-footer';
+
+    const moves = document.createElement('div');
+    moves.className = 'clock-moves hidden';
+
+    const byo = document.createElement('div');
+    byo.className = 'clock-byo hidden';
+
+    footer.appendChild(moves);
+    footer.appendChild(byo);
+
+    container.appendChild(header);
+    container.appendChild(timeWrapper);
+    container.appendChild(footer);
+
+    // Store references
+    this._timeEl = time;
+    this._ghostEl = ghost;
+    this._flagEl = flag;
+    this._colorEl = color;
+    this._movesEl = moves;
+    this._byoEl = byo;
+    this._ledEl = led;
+    this._textLen = 0;
+    this._prev = {};
+  }
+
+  /**
+   * Update the digital display with new state.
+   * @param {object} state
+   * @returns {{ needSync: boolean }} Whether font re-sync is needed
+   */
+  update(state) {
+    const p = this._prev;
+    let needSync = false;
+
+    // Time display
+    const isUpcount = state.method === TimingMethodType.UPCOUNT;
+    const text = formatTime(state.timeMs, !isUpcount);
+
+    if (text !== p.text) {
+      this._timeEl.textContent = text;
+      p.text = text;
+
+      if (text.length !== this._textLen) {
+        this._textLen = text.length;
+        this._ghostEl.textContent = this._toGhostText(text);
+        needSync = true;
+      }
+    }
+
+    // Active/paused/frozen CSS classes
+    if (state.isActive !== p.isActive) {
+      this._container.classList.toggle('active', state.isActive);
+      p.isActive = state.isActive;
+    }
+    if (state.isPaused !== p.isPaused) {
+      this._container.classList.toggle('paused', state.isPaused);
+      p.isPaused = state.isPaused;
+    }
+    if (state.isFrozen !== p.isFrozen) {
+      this._container.classList.toggle('frozen', state.isFrozen);
+      p.isFrozen = state.isFrozen;
+    }
+
+    // Color indicator
+    if (state.color !== p.color) {
+      this._colorEl.className = `clock-color piece-${state.color}`;
+      this._colorEl.setAttribute('aria-label', state.color);
+      p.color = state.color;
+    }
+
+    // Flag state
+    if (state.flagState !== p.flagState) {
+      this._updateFlag(this._flagEl, state.flagState);
+      p.flagState = state.flagState;
+    }
+
+    // Move count
+    if (state.showMoves !== p.showMoves || state.moves !== p.moves) {
+      if (state.showMoves) {
+        this._movesEl.textContent = `Moves: ${state.moves}`;
+        this._movesEl.classList.remove('hidden');
+      } else {
+        this._movesEl.classList.add('hidden');
+      }
+      p.showMoves = state.showMoves;
+      p.moves = state.moves;
+    }
+
+    // Byo-yomi moments
+    if (state.byoMoments !== p.byoMoments) {
+      if (state.byoMoments !== undefined && state.byoMoments > 0) {
+        this._byoEl.textContent = `\u00D7${state.byoMoments}`;
+        this._byoEl.classList.remove('hidden');
+      } else {
+        this._byoEl.classList.add('hidden');
+      }
+      p.byoMoments = state.byoMoments;
+    }
+
+    // Expired warning
+    const expired = state.timeMs <= 0 && !isUpcount;
+    if (expired !== p.expired) {
+      this._timeEl.classList.toggle('time-expired', expired);
+      p.expired = expired;
+    }
+
+    // Low time warning
+    const low = state.timeMs > 0 && state.timeMs <= 10000 && !isUpcount;
+    if (low !== p.low) {
+      this._timeEl.classList.toggle('time-low', low);
+      p.low = low;
+    }
+
+    return { needSync };
+  }
+
+  /**
+   * Get the time element (for font sizing by ClockDisplay).
+   * @returns {HTMLElement}
+   */
+  getTimeElement() {
+    return this._timeEl;
+  }
+
+  /**
+   * Get the ghost element (for font sizing by ClockDisplay).
+   * @returns {HTMLElement}
+   */
+  getGhostElement() {
+    return this._ghostEl;
+  }
+
+  /**
+   * Get the flag element.
+   * @returns {HTMLElement}
+   */
+  getFlagElement() {
+    return this._flagEl;
+  }
+
+  /**
+   * Convert time text to ghost text (all digits become 8).
+   * @param {string} timeText
+   * @returns {string}
+   */
+  _toGhostText(timeText) {
+    return timeText.replace(/\d/g, '8');
+  }
+
+  /**
+   * Update a flag element's CSS classes.
+   * @param {HTMLElement} el
+   * @param {string} flagState
+   */
+  _updateFlag(el, flagState) {
+    el.classList.remove('flag-blinking', 'flag-solid', 'flag-hidden');
+    switch (flagState) {
+      case FlagState.BLINKING:
+        el.classList.add('flag-blinking');
+        break;
+      case FlagState.NON_BLINKING:
+        el.classList.add('flag-solid');
+        break;
+      default:
+        el.classList.add('flag-hidden');
+        break;
+    }
+  }
+
+  /** @override */
+  destroy() {
+    this._container = null;
+    this._timeEl = null;
+    this._ghostEl = null;
+    this._flagEl = null;
+    this._colorEl = null;
+    this._movesEl = null;
+    this._byoEl = null;
+    this._ledEl = null;
+    this._prev = {};
+  }
+}
+
+// --- js/ui/renderers/GardeClockRenderer.js ---
+/**
+ * GardeClockRenderer - Garde-style analog clock face (SVG).
+ *
+ * Classic German precision clock: light beech wood housing, cream dial,
+ * elegant Arabic numerals, thin serif hands, brass center pin, red flag
+ * mechanism at 12 o'clock.
+ */
+
+
+class GardeClockRenderer extends ClockRenderer {
+  constructor() {
+    super();
+    this._side = null;
+    this._container = null;
+    this._svgEl = null;
+    this._minuteHand = null;
+    this._hourHand = null;
+    this._secondsHand = null;
+    this._flagPanel = null;
+    this._ledCircle = null;
+    this._colorCircle = null;
+    this._movesText = null;
+    this._byoText = null;
+    this._dialBorder = null;
+    this._prev = {};
+  }
+
+  /** @override */
+  build(container, side) {
+    this._side = side;
+    this._container = container;
+    container.classList.add('analog-clock', 'garde-clock');
+
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 200 220');
+    svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+    svg.classList.add('analog-svg');
+
+    // Wood housing background
+    const housing = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    housing.setAttribute('x', '5');
+    housing.setAttribute('y', '5');
+    housing.setAttribute('width', '190');
+    housing.setAttribute('height', '210');
+    housing.setAttribute('rx', '12');
+    housing.classList.add('garde-housing');
+
+    // Clock dial
+    const dialGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    dialGroup.setAttribute('transform', 'translate(100, 100)');
+
+    // Dial background
+    const dialBg = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    dialBg.setAttribute('r', '78');
+    dialBg.classList.add('garde-dial');
+
+    // Dial border (glows when active)
+    this._dialBorder = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    this._dialBorder.setAttribute('r', '78');
+    this._dialBorder.classList.add('garde-dial-border');
+
+    // Red flag panel (between 11 and 12)
+    this._flagPanel = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    this._flagPanel.classList.add('garde-flag');
+    // Arc from 330° to 360° (11 o'clock to 12 o'clock)
+    const flagPath = this._describeArc(0, 0, 68, 330, 360);
+    this._flagPanel.setAttribute('d', flagPath);
+
+    // Minute markers (60 ticks)
+    const markersGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    for (let i = 0; i < 60; i++) {
+      const angle = i * 6;
+      const isHour = i % 5 === 0;
+      const inner = isHour ? 62 : 67;
+      const outer = 73;
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      const rad = (angle - 90) * Math.PI / 180;
+      line.setAttribute('x1', String(inner * Math.cos(rad)));
+      line.setAttribute('y1', String(inner * Math.sin(rad)));
+      line.setAttribute('x2', String(outer * Math.cos(rad)));
+      line.setAttribute('y2', String(outer * Math.sin(rad)));
+      line.classList.add(isHour ? 'garde-marker-hour' : 'garde-marker-minute');
+      markersGroup.appendChild(line);
+    }
+
+    // Red reference marker at 3 o'clock (left of the "3" numeral, larger triangle)
+    const secMarker = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+    // Inward-pointing red triangle: tip at r=42 (inside numerals), base at r=36
+    secMarker.setAttribute('points', '42,0 34,-5.5 34,5.5');
+    secMarker.classList.add('garde-sec-marker');
+
+    // Arabic numerals (1-12)
+    const numerals = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    numerals.classList.add('garde-numerals');
+    for (let i = 1; i <= 12; i++) {
+      const angle = i * 30 - 90;
+      const rad = angle * Math.PI / 180;
+      const r = 52;
+      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      text.setAttribute('x', String(r * Math.cos(rad)));
+      text.setAttribute('y', String(r * Math.sin(rad)));
+      text.setAttribute('text-anchor', 'middle');
+      text.setAttribute('dominant-baseline', 'central');
+      text.textContent = String(i);
+      numerals.appendChild(text);
+    }
+
+    // Hour hand
+    this._hourHand = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    this._hourHand.setAttribute('x1', '0');
+    this._hourHand.setAttribute('y1', '8');
+    this._hourHand.setAttribute('x2', '0');
+    this._hourHand.setAttribute('y2', '-35');
+    this._hourHand.classList.add('garde-hand-hour');
+
+    // Minute hand
+    this._minuteHand = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    this._minuteHand.setAttribute('x1', '0');
+    this._minuteHand.setAttribute('y1', '10');
+    this._minuteHand.setAttribute('x2', '0');
+    this._minuteHand.setAttribute('y2', '-65');
+    this._minuteHand.classList.add('garde-hand-minute');
+
+    // Seconds hand (red, thin, ticks once per second)
+    this._secondsHand = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    this._secondsHand.setAttribute('x1', '0');
+    this._secondsHand.setAttribute('y1', '14');
+    this._secondsHand.setAttribute('x2', '0');
+    this._secondsHand.setAttribute('y2', '-70');
+    this._secondsHand.classList.add('garde-hand-seconds');
+
+    // Center pin
+    const pin = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    pin.setAttribute('r', '3');
+    pin.classList.add('garde-pin');
+
+    dialGroup.appendChild(dialBg);
+    dialGroup.appendChild(this._flagPanel);
+    dialGroup.appendChild(markersGroup);
+    dialGroup.appendChild(secMarker);
+    dialGroup.appendChild(numerals);
+    dialGroup.appendChild(this._dialBorder);
+    dialGroup.appendChild(this._hourHand);
+    dialGroup.appendChild(this._minuteHand);
+    dialGroup.appendChild(this._secondsHand);
+    dialGroup.appendChild(pin);
+
+    // LED indicator (below dial)
+    this._ledCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    this._ledCircle.setAttribute('cx', '100');
+    this._ledCircle.setAttribute('cy', '192');
+    this._ledCircle.setAttribute('r', '5');
+    this._ledCircle.classList.add('garde-led');
+
+    // Color indicator (bottom-right)
+    this._colorCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    this._colorCircle.setAttribute('cx', '160');
+    this._colorCircle.setAttribute('cy', '192');
+    this._colorCircle.setAttribute('r', '8');
+    this._colorCircle.classList.add('garde-color-indicator');
+
+    // Moves text (bottom-left)
+    this._movesText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    this._movesText.setAttribute('x', '40');
+    this._movesText.setAttribute('y', '196');
+    this._movesText.setAttribute('text-anchor', 'middle');
+    this._movesText.classList.add('garde-info-text', 'hidden');
+
+    // Byo-yomi text (below moves)
+    this._byoText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    this._byoText.setAttribute('x', '40');
+    this._byoText.setAttribute('y', '210');
+    this._byoText.setAttribute('text-anchor', 'middle');
+    this._byoText.classList.add('garde-info-text', 'hidden');
+
+    svg.appendChild(housing);
+    svg.appendChild(dialGroup);
+    svg.appendChild(this._ledCircle);
+    svg.appendChild(this._colorCircle);
+    svg.appendChild(this._movesText);
+    svg.appendChild(this._byoText);
+
+    this._svgEl = svg;
+    container.appendChild(svg);
+    this._prev = {};
+  }
+
+  /** @override */
+  update(state) {
+    const p = this._prev;
+
+    // Update hand angles
+    const angles = this._computeAngles(state.timeMs);
+    if (angles.minute !== p.minuteAngle) {
+      this._minuteHand.setAttribute('transform', `rotate(${angles.minute})`);
+      p.minuteAngle = angles.minute;
+    }
+    if (angles.hour !== p.hourAngle) {
+      this._hourHand.setAttribute('transform', `rotate(${angles.hour})`);
+      p.hourAngle = angles.hour;
+    }
+    if (angles.second !== p.secondAngle) {
+      this._secondsHand.setAttribute('transform', `rotate(${angles.second})`);
+      p.secondAngle = angles.second;
+    }
+
+    // Active/paused/frozen state
+    if (state.isActive !== p.isActive) {
+      this._container.classList.toggle('active', state.isActive);
+      this._dialBorder.classList.toggle('garde-dial-active', state.isActive);
+      p.isActive = state.isActive;
+    }
+    if (state.isPaused !== p.isPaused) {
+      this._container.classList.toggle('paused', state.isPaused);
+      p.isPaused = state.isPaused;
+    }
+    if (state.isFrozen !== p.isFrozen) {
+      this._container.classList.toggle('frozen', state.isFrozen);
+      p.isFrozen = state.isFrozen;
+    }
+
+    // LED state
+    const ledState = state.isFrozen ? 'frozen' : state.isPaused ? 'paused' : state.isActive ? 'active' : 'off';
+    if (ledState !== p.ledState) {
+      this._ledCircle.classList.remove('led-active', 'led-paused', 'led-frozen');
+      if (ledState !== 'off') this._ledCircle.classList.add(`led-${ledState}`);
+      p.ledState = ledState;
+    }
+
+    // Flag state
+    if (state.flagState !== p.flagState) {
+      this._flagPanel.classList.remove('flag-raised', 'flag-fallen', 'flag-fallen-blink');
+      if (state.flagState === FlagState.NONE) {
+        this._flagPanel.classList.add('flag-raised');
+      } else if (state.flagState === FlagState.BLINKING) {
+        this._flagPanel.classList.add('flag-fallen-blink');
+      } else {
+        this._flagPanel.classList.add('flag-fallen');
+      }
+      p.flagState = state.flagState;
+    }
+
+    // Color indicator
+    if (state.color !== p.color) {
+      this._colorCircle.classList.remove('piece-white', 'piece-black');
+      this._colorCircle.classList.add(`piece-${state.color}`);
+      p.color = state.color;
+    }
+
+    // Move count
+    if (state.showMoves !== p.showMoves || state.moves !== p.moves) {
+      if (state.showMoves) {
+        this._movesText.textContent = `Moves: ${state.moves}`;
+        this._movesText.classList.remove('hidden');
+      } else {
+        this._movesText.classList.add('hidden');
+      }
+      p.showMoves = state.showMoves;
+      p.moves = state.moves;
+    }
+
+    // Byo-yomi
+    if (state.byoMoments !== p.byoMoments) {
+      if (state.byoMoments !== undefined && state.byoMoments > 0) {
+        this._byoText.textContent = `\u00D7${state.byoMoments}`;
+        this._byoText.classList.remove('hidden');
+      } else {
+        this._byoText.classList.add('hidden');
+      }
+      p.byoMoments = state.byoMoments;
+    }
+
+    // Low time / expired indicators on hands
+    const isUpcount = state.method === TimingMethodType.UPCOUNT;
+    const lowTime = !isUpcount && state.timeMs > 0 && state.timeMs <= 10000;
+    const expired = !isUpcount && state.timeMs <= 0;
+    if (lowTime !== p.lowTime) {
+      this._minuteHand.classList.toggle('hand-low', lowTime);
+      this._hourHand.classList.toggle('hand-low', lowTime);
+      p.lowTime = lowTime;
+    }
+    if (expired !== p.expired) {
+      this._minuteHand.classList.toggle('hand-expired', expired);
+      this._hourHand.classList.toggle('hand-expired', expired);
+      p.expired = expired;
+    }
+
+    return {};
+  }
+
+  /**
+   * Compute hand angles from remaining milliseconds.
+   * At 0:00 remaining, minute hand points to 12 (0°) = time expired.
+   * Time counts down clockwise toward 12.
+   * @param {number} timeMs
+   * @returns {{ minute: number, hour: number, second: number }}
+   */
+  _computeAngles(timeMs) {
+    const totalSeconds = Math.max(0, timeMs) / 1000;
+    const minutesPart = (totalSeconds / 60) % 60;
+    const secondsPart = totalSeconds % 60;
+    const minuteAngle = (360 - (minutesPart * 6 + (secondsPart / 60) * 6)) % 360;
+    const hourAngle = (360 - (((totalSeconds / 3600) % 12) * 30)) % 360;
+    // Seconds hand: discrete ticks (floor to whole seconds), clockwise toward 12
+    const wholeSeconds = Math.floor(secondsPart);
+    const secondAngle = (360 - (wholeSeconds * 6)) % 360;
+    return { minute: minuteAngle, hour: hourAngle, second: secondAngle };
+  }
+
+  /**
+   * Describe an SVG arc path.
+   * @param {number} cx - Center X
+   * @param {number} cy - Center Y
+   * @param {number} r - Radius
+   * @param {number} startAngle - Start angle in degrees
+   * @param {number} endAngle - End angle in degrees
+   * @returns {string} SVG path d attribute
+   */
+  _describeArc(cx, cy, r, startAngle, endAngle) {
+    const start = this._polarToCartesian(cx, cy, r, endAngle);
+    const end = this._polarToCartesian(cx, cy, r, startAngle);
+    const largeArcFlag = endAngle - startAngle <= 180 ? '0' : '1';
+    return `M ${cx} ${cy} L ${start.x} ${start.y} A ${r} ${r} 0 ${largeArcFlag} 0 ${end.x} ${end.y} Z`;
+  }
+
+  /**
+   * Convert polar coordinates to cartesian.
+   * @param {number} cx
+   * @param {number} cy
+   * @param {number} r
+   * @param {number} angleDeg
+   * @returns {{ x: number, y: number }}
+   */
+  _polarToCartesian(cx, cy, r, angleDeg) {
+    const rad = (angleDeg - 90) * Math.PI / 180;
+    return {
+      x: cx + r * Math.cos(rad),
+      y: cy + r * Math.sin(rad),
+    };
+  }
+
+  /** @override */
+  destroy() {
+    if (this._container) {
+      this._container.classList.remove('analog-clock', 'garde-clock');
+    }
+    this._svgEl = null;
+    this._minuteHand = null;
+    this._hourHand = null;
+    this._secondsHand = null;
+    this._flagPanel = null;
+    this._ledCircle = null;
+    this._colorCircle = null;
+    this._movesText = null;
+    this._byoText = null;
+    this._dialBorder = null;
+    this._container = null;
+    this._prev = {};
+  }
+}
+
+// --- js/ui/renderers/InsaClockRenderer.js ---
+/**
+ * InsaClockRenderer - Insa-style analog clock face (SVG).
+ *
+ * Yugoslav tournament clock: darker walnut wood housing, bolder sans-serif
+ * numerals, thicker hands, brass trim border, distinctive oscillating bar
+ * that swings when the clock is active.
+ */
+
+
+class InsaClockRenderer extends ClockRenderer {
+  constructor() {
+    super();
+    this._side = null;
+    this._container = null;
+    this._svgEl = null;
+    this._minuteHand = null;
+    this._hourHand = null;
+    this._flagPanel = null;
+    this._ledCircle = null;
+    this._colorCircle = null;
+    this._movesText = null;
+    this._byoText = null;
+    this._dialBorder = null;
+    this._oscillatorBar = null;
+    this._prev = {};
+  }
+
+  /** @override */
+  build(container, side) {
+    this._side = side;
+    this._container = container;
+    container.classList.add('analog-clock', 'insa-clock');
+
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 200 230');
+    svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+    svg.classList.add('analog-svg');
+
+    // Wood housing background
+    const housing = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    housing.setAttribute('x', '5');
+    housing.setAttribute('y', '5');
+    housing.setAttribute('width', '190');
+    housing.setAttribute('height', '220');
+    housing.setAttribute('rx', '8');
+    housing.classList.add('insa-housing');
+
+    // Brass trim border
+    const trim = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    trim.setAttribute('x', '10');
+    trim.setAttribute('y', '10');
+    trim.setAttribute('width', '180');
+    trim.setAttribute('height', '210');
+    trim.setAttribute('rx', '6');
+    trim.classList.add('insa-trim');
+
+    // Clock dial
+    const dialGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    dialGroup.setAttribute('transform', 'translate(100, 100)');
+
+    // Dial background
+    const dialBg = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    dialBg.setAttribute('r', '78');
+    dialBg.classList.add('insa-dial');
+
+    // Dial border
+    this._dialBorder = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    this._dialBorder.setAttribute('r', '78');
+    this._dialBorder.classList.add('insa-dial-border');
+
+    // Red flag panel (between 11 and 12)
+    this._flagPanel = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    this._flagPanel.classList.add('insa-flag');
+    const flagPath = this._describeArc(0, 0, 68, 330, 360);
+    this._flagPanel.setAttribute('d', flagPath);
+
+    // Minute markers
+    const markersGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    for (let i = 0; i < 60; i++) {
+      const angle = i * 6;
+      const isHour = i % 5 === 0;
+      const inner = isHour ? 60 : 67;
+      const outer = 73;
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      const rad = (angle - 90) * Math.PI / 180;
+      line.setAttribute('x1', String(inner * Math.cos(rad)));
+      line.setAttribute('y1', String(inner * Math.sin(rad)));
+      line.setAttribute('x2', String(outer * Math.cos(rad)));
+      line.setAttribute('y2', String(outer * Math.sin(rad)));
+      line.classList.add(isHour ? 'insa-marker-hour' : 'insa-marker-minute');
+      markersGroup.appendChild(line);
+    }
+
+    // Bold Arabic numerals (1-12)
+    const numerals = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    numerals.classList.add('insa-numerals');
+    for (let i = 1; i <= 12; i++) {
+      const angle = i * 30 - 90;
+      const rad = angle * Math.PI / 180;
+      const r = 50;
+      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      text.setAttribute('x', String(r * Math.cos(rad)));
+      text.setAttribute('y', String(r * Math.sin(rad)));
+      text.setAttribute('text-anchor', 'middle');
+      text.setAttribute('dominant-baseline', 'central');
+      text.textContent = String(i);
+      numerals.appendChild(text);
+    }
+
+    // Hour hand (thicker than Garde)
+    this._hourHand = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    this._hourHand.setAttribute('x1', '0');
+    this._hourHand.setAttribute('y1', '8');
+    this._hourHand.setAttribute('x2', '0');
+    this._hourHand.setAttribute('y2', '-35');
+    this._hourHand.classList.add('insa-hand-hour');
+
+    // Minute hand (thicker than Garde)
+    this._minuteHand = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    this._minuteHand.setAttribute('x1', '0');
+    this._minuteHand.setAttribute('y1', '10');
+    this._minuteHand.setAttribute('x2', '0');
+    this._minuteHand.setAttribute('y2', '-65');
+    this._minuteHand.classList.add('insa-hand-minute');
+
+    // Center pin (larger than Garde)
+    const pin = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    pin.setAttribute('r', '4.5');
+    pin.classList.add('insa-pin');
+
+    dialGroup.appendChild(dialBg);
+    dialGroup.appendChild(this._flagPanel);
+    dialGroup.appendChild(markersGroup);
+    dialGroup.appendChild(numerals);
+    dialGroup.appendChild(this._dialBorder);
+    dialGroup.appendChild(this._hourHand);
+    dialGroup.appendChild(this._minuteHand);
+    dialGroup.appendChild(pin);
+
+    // Oscillating bar (below dial)
+    this._oscillatorBar = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    this._oscillatorBar.setAttribute('x', '60');
+    this._oscillatorBar.setAttribute('y', '188');
+    this._oscillatorBar.setAttribute('width', '80');
+    this._oscillatorBar.setAttribute('height', '6');
+    this._oscillatorBar.setAttribute('rx', '3');
+    this._oscillatorBar.classList.add('insa-oscillator');
+
+    // LED indicator
+    this._ledCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    this._ledCircle.setAttribute('cx', '100');
+    this._ledCircle.setAttribute('cy', '205');
+    this._ledCircle.setAttribute('r', '5');
+    this._ledCircle.classList.add('insa-led');
+
+    // Color indicator
+    this._colorCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    this._colorCircle.setAttribute('cx', '160');
+    this._colorCircle.setAttribute('cy', '205');
+    this._colorCircle.setAttribute('r', '8');
+    this._colorCircle.classList.add('insa-color-indicator');
+
+    // Moves text
+    this._movesText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    this._movesText.setAttribute('x', '40');
+    this._movesText.setAttribute('y', '209');
+    this._movesText.setAttribute('text-anchor', 'middle');
+    this._movesText.classList.add('insa-info-text', 'hidden');
+
+    // Byo-yomi text
+    this._byoText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    this._byoText.setAttribute('x', '40');
+    this._byoText.setAttribute('y', '221');
+    this._byoText.setAttribute('text-anchor', 'middle');
+    this._byoText.classList.add('insa-info-text', 'hidden');
+
+    svg.appendChild(housing);
+    svg.appendChild(trim);
+    svg.appendChild(dialGroup);
+    svg.appendChild(this._oscillatorBar);
+    svg.appendChild(this._ledCircle);
+    svg.appendChild(this._colorCircle);
+    svg.appendChild(this._movesText);
+    svg.appendChild(this._byoText);
+
+    this._svgEl = svg;
+    container.appendChild(svg);
+    this._prev = {};
+  }
+
+  /** @override */
+  update(state) {
+    const p = this._prev;
+
+    // Hand angles
+    const angles = this._computeAngles(state.timeMs);
+    if (angles.minute !== p.minuteAngle) {
+      this._minuteHand.setAttribute('transform', `rotate(${angles.minute})`);
+      p.minuteAngle = angles.minute;
+    }
+    if (angles.hour !== p.hourAngle) {
+      this._hourHand.setAttribute('transform', `rotate(${angles.hour})`);
+      p.hourAngle = angles.hour;
+    }
+
+    // Active/paused/frozen state
+    if (state.isActive !== p.isActive) {
+      this._container.classList.toggle('active', state.isActive);
+      this._dialBorder.classList.toggle('insa-dial-active', state.isActive);
+      this._oscillatorBar.classList.toggle('oscillating', state.isActive);
+      p.isActive = state.isActive;
+    }
+    if (state.isPaused !== p.isPaused) {
+      this._container.classList.toggle('paused', state.isPaused);
+      if (state.isPaused) this._oscillatorBar.classList.remove('oscillating');
+      p.isPaused = state.isPaused;
+    }
+    if (state.isFrozen !== p.isFrozen) {
+      this._container.classList.toggle('frozen', state.isFrozen);
+      if (state.isFrozen) this._oscillatorBar.classList.remove('oscillating');
+      p.isFrozen = state.isFrozen;
+    }
+
+    // LED state
+    const ledState = state.isFrozen ? 'frozen' : state.isPaused ? 'paused' : state.isActive ? 'active' : 'off';
+    if (ledState !== p.ledState) {
+      this._ledCircle.classList.remove('led-active', 'led-paused', 'led-frozen');
+      if (ledState !== 'off') this._ledCircle.classList.add(`led-${ledState}`);
+      p.ledState = ledState;
+    }
+
+    // Flag state
+    if (state.flagState !== p.flagState) {
+      this._flagPanel.classList.remove('flag-raised', 'flag-fallen', 'flag-fallen-blink');
+      if (state.flagState === FlagState.NONE) {
+        this._flagPanel.classList.add('flag-raised');
+      } else if (state.flagState === FlagState.BLINKING) {
+        this._flagPanel.classList.add('flag-fallen-blink');
+      } else {
+        this._flagPanel.classList.add('flag-fallen');
+      }
+      p.flagState = state.flagState;
+    }
+
+    // Color indicator
+    if (state.color !== p.color) {
+      this._colorCircle.classList.remove('piece-white', 'piece-black');
+      this._colorCircle.classList.add(`piece-${state.color}`);
+      p.color = state.color;
+    }
+
+    // Move count
+    if (state.showMoves !== p.showMoves || state.moves !== p.moves) {
+      if (state.showMoves) {
+        this._movesText.textContent = `Moves: ${state.moves}`;
+        this._movesText.classList.remove('hidden');
+      } else {
+        this._movesText.classList.add('hidden');
+      }
+      p.showMoves = state.showMoves;
+      p.moves = state.moves;
+    }
+
+    // Byo-yomi
+    if (state.byoMoments !== p.byoMoments) {
+      if (state.byoMoments !== undefined && state.byoMoments > 0) {
+        this._byoText.textContent = `\u00D7${state.byoMoments}`;
+        this._byoText.classList.remove('hidden');
+      } else {
+        this._byoText.classList.add('hidden');
+      }
+      p.byoMoments = state.byoMoments;
+    }
+
+    // Low time / expired on hands
+    const isUpcount = state.method === TimingMethodType.UPCOUNT;
+    const lowTime = !isUpcount && state.timeMs > 0 && state.timeMs <= 10000;
+    const expired = !isUpcount && state.timeMs <= 0;
+    if (lowTime !== p.lowTime) {
+      this._minuteHand.classList.toggle('hand-low', lowTime);
+      this._hourHand.classList.toggle('hand-low', lowTime);
+      p.lowTime = lowTime;
+    }
+    if (expired !== p.expired) {
+      this._minuteHand.classList.toggle('hand-expired', expired);
+      this._hourHand.classList.toggle('hand-expired', expired);
+      p.expired = expired;
+    }
+
+    return {};
+  }
+
+  /**
+   * Compute hand angles from remaining milliseconds.
+   * @param {number} timeMs
+   * @returns {{ minute: number, hour: number }}
+   */
+  _computeAngles(timeMs) {
+    const totalSeconds = Math.max(0, timeMs) / 1000;
+    const minutesPart = (totalSeconds / 60) % 60;
+    const secondsPart = totalSeconds % 60;
+    const minuteAngle = (360 - (minutesPart * 6 + (secondsPart / 60) * 6)) % 360;
+    const hourAngle = (360 - (((totalSeconds / 3600) % 12) * 30)) % 360;
+    return { minute: minuteAngle, hour: hourAngle };
+  }
+
+  /**
+   * Describe an SVG arc path.
+   * @param {number} cx
+   * @param {number} cy
+   * @param {number} r
+   * @param {number} startAngle
+   * @param {number} endAngle
+   * @returns {string}
+   */
+  _describeArc(cx, cy, r, startAngle, endAngle) {
+    const start = this._polarToCartesian(cx, cy, r, endAngle);
+    const end = this._polarToCartesian(cx, cy, r, startAngle);
+    const largeArcFlag = endAngle - startAngle <= 180 ? '0' : '1';
+    return `M ${cx} ${cy} L ${start.x} ${start.y} A ${r} ${r} 0 ${largeArcFlag} 0 ${end.x} ${end.y} Z`;
+  }
+
+  /**
+   * @param {number} cx
+   * @param {number} cy
+   * @param {number} r
+   * @param {number} angleDeg
+   * @returns {{ x: number, y: number }}
+   */
+  _polarToCartesian(cx, cy, r, angleDeg) {
+    const rad = (angleDeg - 90) * Math.PI / 180;
+    return {
+      x: cx + r * Math.cos(rad),
+      y: cy + r * Math.sin(rad),
+    };
+  }
+
+  /** @override */
+  destroy() {
+    if (this._container) {
+      this._container.classList.remove('analog-clock', 'insa-clock');
+    }
+    this._svgEl = null;
+    this._minuteHand = null;
+    this._hourHand = null;
+    this._flagPanel = null;
+    this._ledCircle = null;
+    this._colorCircle = null;
+    this._movesText = null;
+    this._byoText = null;
+    this._dialBorder = null;
+    this._oscillatorBar = null;
+    this._container = null;
+    this._prev = {};
+  }
+}
+
 // --- js/ui/ClockDisplay.js ---
 /**
  * ClockDisplay - Renders the clock face for both players
  *
- * Displays:
- * - Large time digits for each player
- * - Active/inactive player highlighting
- * - Flag indicators
- * - Color indicators (white/black piece)
- * - Move count (on demand)
- * - Byo-yomi moments remaining
+ * Delegates per-side rendering to a ClockRenderer instance (digital, Garde, Insa).
+ * Manages container structure, ResizeObserver, and coordinated font sizing.
  */
 
 
@@ -3167,82 +4645,128 @@ class ClockDisplay {
     this._leftClockEl = null;
     /** @type {HTMLElement} */
     this._rightClockEl = null;
-    /** @type {HTMLElement} */
-    this._leftTimeEl = null;
-    /** @type {HTMLElement} */
-    this._rightTimeEl = null;
-    /** @type {HTMLElement} */
-    this._leftFlagEl = null;
-    /** @type {HTMLElement} */
-    this._rightFlagEl = null;
-    /** @type {HTMLElement} */
-    this._leftColorEl = null;
-    /** @type {HTMLElement} */
-    this._rightColorEl = null;
-    /** @type {HTMLElement} */
-    this._leftMovesEl = null;
-    /** @type {HTMLElement} */
-    this._rightMovesEl = null;
-    /** @type {HTMLElement} */
-    this._leftByoEl = null;
-    /** @type {HTMLElement} */
-    this._rightByoEl = null;
-    /** @type {HTMLElement} */
-    this._leftGhostEl = null;
-    /** @type {HTMLElement} */
-    this._rightGhostEl = null;
-    /** @type {HTMLElement} */
-    this._leftLedEl = null;
-    /** @type {HTMLElement} */
-    this._rightLedEl = null;
 
-    // Auto-size state
-    this._leftTextLen = 0;
-    this._rightTextLen = 0;
+    /** @type {import('./renderers/ClockRenderer.js').ClockRenderer} */
+    this._leftRenderer = null;
+    /** @type {import('./renderers/ClockRenderer.js').ClockRenderer} */
+    this._rightRenderer = null;
+
+    /** @type {string} */
+    this._rendererType = ClockFaceStyle.DIGITAL;
+
+    // Auto-size state (digital only)
     this._resizeObserver = null;
-
-    // Dirty-checking cache for update()
-    this._prev = {};
-
-    // ResizeObserver dimension tracking
     this._leftDims = { w: 0, h: 0 };
     this._rightDims = { w: 0, h: 0 };
-
-    // Font size cache: "w,h,len" -> fontSize
     this._fontSizeCache = new Map();
+
+    // Dirty-checking cache for container-level state
+    this._prev = {};
 
     this._build();
   }
 
+  /**
+   * Build the clock container and initial renderers.
+   */
   _build() {
     this._container.innerHTML = '';
     this._container.classList.add('clock-container');
 
-    // Left clock
-    this._leftClockEl = this._createClockFace('left');
-    // Right clock
-    this._rightClockEl = this._createClockFace('right');
+    // Create clock face containers
+    this._leftClockEl = this._createClockFaceContainer('left');
+    this._rightClockEl = this._createClockFaceContainer('right');
 
     this._container.appendChild(this._leftClockEl);
     this._container.appendChild(this._rightClockEl);
 
-    // Store references
-    this._leftTimeEl = this._leftClockEl.querySelector('.clock-time');
-    this._rightTimeEl = this._rightClockEl.querySelector('.clock-time');
-    this._leftFlagEl = this._leftClockEl.querySelector('.clock-flag');
-    this._rightFlagEl = this._rightClockEl.querySelector('.clock-flag');
-    this._leftColorEl = this._leftClockEl.querySelector('.clock-color');
-    this._rightColorEl = this._rightClockEl.querySelector('.clock-color');
-    this._leftMovesEl = this._leftClockEl.querySelector('.clock-moves');
-    this._rightMovesEl = this._rightClockEl.querySelector('.clock-moves');
-    this._leftByoEl = this._leftClockEl.querySelector('.clock-byo');
-    this._rightByoEl = this._rightClockEl.querySelector('.clock-byo');
-    this._leftGhostEl = this._leftClockEl.querySelector('.clock-ghost');
-    this._rightGhostEl = this._rightClockEl.querySelector('.clock-ghost');
-    this._leftLedEl = this._leftClockEl.querySelector('.led-indicator');
-    this._rightLedEl = this._rightClockEl.querySelector('.led-indicator');
+    // Create renderers and build interiors
+    this._leftRenderer = this._createRenderer(this._rendererType);
+    this._rightRenderer = this._createRenderer(this._rendererType);
+    this._leftRenderer.build(this._leftClockEl, 'left');
+    this._rightRenderer.build(this._rightClockEl, 'right');
 
     this._initAutoSize();
+  }
+
+  /**
+   * Create a clock face container element (the outer shell).
+   * @param {string} side
+   * @returns {HTMLElement}
+   */
+  _createClockFaceContainer(side) {
+    const clock = document.createElement('div');
+    clock.className = `clock-face clock-${side}`;
+    clock.setAttribute('data-side', side);
+    clock.setAttribute('role', 'button');
+    clock.setAttribute('tabindex', '0');
+    clock.setAttribute('aria-label', `${side} player clock`);
+    return clock;
+  }
+
+  /**
+   * Create a renderer instance by style ID.
+   * @param {string} styleId - ClockFaceStyle value
+   * @returns {import('./renderers/ClockRenderer.js').ClockRenderer}
+   */
+  _createRenderer(styleId) {
+    switch (styleId) {
+      case ClockFaceStyle.GARDE:
+        return new GardeClockRenderer();
+      case ClockFaceStyle.INSA:
+        return new InsaClockRenderer();
+      case ClockFaceStyle.DIGITAL:
+      default:
+        return new DigitalClockRenderer();
+    }
+  }
+
+  /**
+   * Switch the clock face style. Tears down current renderers and rebuilds.
+   * @param {string} styleId - ClockFaceStyle value
+   */
+  setClockFaceStyle(styleId) {
+    if (styleId === this._rendererType) return;
+    this._rendererType = styleId;
+
+    // Destroy current renderers
+    if (this._leftRenderer) this._leftRenderer.destroy();
+    if (this._rightRenderer) this._rightRenderer.destroy();
+
+    // Clear clock face interiors (keep the containers)
+    this._leftClockEl.innerHTML = '';
+    this._rightClockEl.innerHTML = '';
+
+    // Reset dirty-check caches
+    this._prev = {};
+    this._fontSizeCache.clear();
+
+    // Create new renderers
+    this._leftRenderer = this._createRenderer(styleId);
+    this._rightRenderer = this._createRenderer(styleId);
+    this._leftRenderer.build(this._leftClockEl, 'left');
+    this._rightRenderer.build(this._rightClockEl, 'right');
+
+    // Toggle container class for analog vs digital styling
+    const isAnalog = styleId !== ClockFaceStyle.DIGITAL;
+    this._container.classList.toggle('analog-mode', isAnalog);
+
+    // Re-sync sizing
+    if (this._isDigital()) {
+      requestAnimationFrame(() => this._syncFontSizes());
+    } else {
+      requestAnimationFrame(() => {
+        this._leftRenderer.onResize(this._leftClockEl.clientWidth, this._leftClockEl.clientHeight);
+        this._rightRenderer.onResize(this._rightClockEl.clientWidth, this._rightClockEl.clientHeight);
+      });
+    }
+  }
+
+  /**
+   * @returns {boolean} Whether current renderer is digital
+   */
+  _isDigital() {
+    return this._rendererType === ClockFaceStyle.DIGITAL;
   }
 
   /**
@@ -3261,24 +4785,31 @@ class ClockDisplay {
         dims.h = h;
         changed = true;
       }
-      if (changed) this._syncFontSizes();
+      if (changed) {
+        if (this._isDigital()) {
+          this._syncFontSizes();
+        } else {
+          this._leftRenderer.onResize(this._leftDims.w, this._leftDims.h);
+          this._rightRenderer.onResize(this._rightDims.w, this._rightDims.h);
+        }
+      }
     });
 
     this._resizeObserver.observe(this._leftClockEl);
     this._resizeObserver.observe(this._rightClockEl);
 
-    // Initial fit after layout
     requestAnimationFrame(() => {
-      this._syncFontSizes();
+      if (this._isDigital()) {
+        this._syncFontSizes();
+      }
     });
   }
 
   /**
    * Binary-search for the largest font-size that fits within the container.
-   * Returns the computed size without applying it.
-   * @param {HTMLElement} container - The clock face element
-   * @param {HTMLElement} textEl - The time text element
-   * @returns {number} The computed font size in px, or 0 if container has no size
+   * @param {HTMLElement} container
+   * @param {HTMLElement} textEl
+   * @returns {number}
    */
   _computeFitSize(container, textEl) {
     const containerW = container.clientWidth;
@@ -3312,9 +4843,9 @@ class ClockDisplay {
 
   /**
    * Apply a font size to a clock face's time and ghost elements.
-   * @param {HTMLElement} container - The clock face element
-   * @param {HTMLElement} textEl - The time text element
-   * @param {number} size - Font size in px
+   * @param {HTMLElement} container
+   * @param {HTMLElement} textEl
+   * @param {number} size
    */
   _applyFontSize(container, textEl, size) {
     textEl.style.fontSize = size + 'px';
@@ -3323,94 +4854,29 @@ class ClockDisplay {
   }
 
   /**
-   * Compute optimal font sizes for both sides and apply the minimum
-   * so both clocks always display at the same size.
+   * Compute optimal font sizes for both sides and apply the minimum.
    */
   _syncFontSizes() {
-    const leftSize = this._computeFitSize(this._leftClockEl, this._leftTimeEl);
-    const rightSize = this._computeFitSize(this._rightClockEl, this._rightTimeEl);
+    if (!this._isDigital()) return;
+
+    const leftTimeEl = this._leftRenderer.getTimeElement();
+    const rightTimeEl = this._rightRenderer.getTimeElement();
+    if (!leftTimeEl || !rightTimeEl) return;
+
+    const leftSize = this._computeFitSize(this._leftClockEl, leftTimeEl);
+    const rightSize = this._computeFitSize(this._rightClockEl, rightTimeEl);
     if (leftSize === 0 || rightSize === 0) return;
 
     const size = Math.min(leftSize, rightSize);
-    this._applyFontSize(this._leftClockEl, this._leftTimeEl, size);
-    this._applyFontSize(this._rightClockEl, this._rightTimeEl, size);
+    this._applyFontSize(this._leftClockEl, leftTimeEl, size);
+    this._applyFontSize(this._rightClockEl, rightTimeEl, size);
   }
 
   /**
-   * Clear the font size cache so sizes recompute on next sync.
+   * Clear the font size cache.
    */
   clearFontSizeCache() {
     this._fontSizeCache.clear();
-  }
-
-  /**
-   * Create a single clock face element.
-   * @param {string} side
-   * @returns {HTMLElement}
-   */
-  _createClockFace(side) {
-    const clock = document.createElement('div');
-    clock.className = `clock-face clock-${side}`;
-    clock.setAttribute('data-side', side);
-    clock.setAttribute('role', 'button');
-    clock.setAttribute('tabindex', '0');
-    clock.setAttribute('aria-label', `${side} player clock`);
-
-    // Flag indicator
-    const flag = document.createElement('div');
-    flag.className = 'clock-flag flag-hidden';
-    flag.textContent = '\u2691'; // Flag
-
-    // LED indicator
-    const led = document.createElement('div');
-    led.className = 'led-indicator';
-
-    // Color indicator
-    const color = document.createElement('div');
-    color.className = 'clock-color';
-
-    // Header row (flag + LED + color)
-    const header = document.createElement('div');
-    header.className = 'clock-header';
-    header.appendChild(flag);
-    header.appendChild(led);
-    header.appendChild(color);
-
-    // Time wrapper (holds ghost + real time)
-    const timeWrapper = document.createElement('div');
-    timeWrapper.className = 'time-wrapper';
-
-    // Ghost segments (unlit LCD segments behind real digits)
-    const ghost = document.createElement('div');
-    ghost.className = 'clock-ghost';
-    ghost.textContent = '8:88';
-
-    // Time display
-    const time = document.createElement('div');
-    time.className = 'clock-time';
-    time.textContent = '0:00';
-
-    timeWrapper.appendChild(ghost);
-    timeWrapper.appendChild(time);
-
-    // Footer row (moves + byo)
-    const footer = document.createElement('div');
-    footer.className = 'clock-footer';
-
-    const moves = document.createElement('div');
-    moves.className = 'clock-moves hidden';
-
-    const byo = document.createElement('div');
-    byo.className = 'clock-byo hidden';
-
-    footer.appendChild(moves);
-    footer.appendChild(byo);
-
-    clock.appendChild(header);
-    clock.appendChild(timeWrapper);
-    clock.appendChild(footer);
-
-    return clock;
   }
 
   /**
@@ -3418,10 +4884,13 @@ class ClockDisplay {
    * @returns {{ left: HTMLElement, right: HTMLElement }}
    */
   getFlagElements() {
-    return {
-      left: this._leftFlagEl,
-      right: this._rightFlagEl,
-    };
+    if (this._isDigital()) {
+      return {
+        left: this._leftRenderer.getFlagElement(),
+        right: this._rightRenderer.getFlagElement(),
+      };
+    }
+    return { left: null, right: null };
   }
 
   /**
@@ -3437,207 +4906,64 @@ class ClockDisplay {
 
   /**
    * Update the display for both players.
-   * @param {object} state
-   * @param {number} state.leftTimeMs
-   * @param {number} state.rightTimeMs
-   * @param {string} state.activePlayer - Player.LEFT, Player.RIGHT, or null
-   * @param {string} state.gameStatus
-   * @param {string} state.leftColor - 'white' or 'black'
-   * @param {string} state.rightColor - 'white' or 'black'
-   * @param {string} state.leftFlagState
-   * @param {string} state.rightFlagState
-   * @param {number} state.leftMoves
-   * @param {number} state.rightMoves
-   * @param {boolean} state.showMoves
-   * @param {number} [state.leftByoMoments]
-   * @param {number} [state.rightByoMoments]
-   * @param {string} [state.leftMethod]
-   * @param {string} [state.rightMethod]
+   * @param {object} state - Full state from app._updateDisplay()
    */
   update(state) {
-    const p = this._prev;
-
-    // Time display
-    const leftIsUpcount = state.leftMethod === TimingMethodType.UPCOUNT;
-    const rightIsUpcount = state.rightMethod === TimingMethodType.UPCOUNT;
-
-    const leftText = formatTime(state.leftTimeMs, !leftIsUpcount);
-    const rightText = formatTime(state.rightTimeMs, !rightIsUpcount);
-
-    let needSync = false;
-
-    if (leftText !== p.leftText) {
-      this._leftTimeEl.textContent = leftText;
-      p.leftText = leftText;
-
-      // Re-fit text if length changed (e.g. "5:00" -> "4:59:59")
-      if (leftText.length !== this._leftTextLen) {
-        this._leftTextLen = leftText.length;
-        this._leftGhostEl.textContent = this._toGhostText(leftText);
-        needSync = true;
-      }
-    }
-
-    if (rightText !== p.rightText) {
-      this._rightTimeEl.textContent = rightText;
-      p.rightText = rightText;
-
-      if (rightText.length !== this._rightTextLen) {
-        this._rightTextLen = rightText.length;
-        this._rightGhostEl.textContent = this._toGhostText(rightText);
-        needSync = true;
-      }
-    }
-
-    if (needSync) this._syncFontSizes();
-
-    // Active player highlighting
     const leftActive = state.activePlayer === Player.LEFT && state.gameStatus === GameStatus.RUNNING;
     const rightActive = state.activePlayer === Player.RIGHT && state.gameStatus === GameStatus.RUNNING;
     const leftPaused = state.gameStatus === GameStatus.PAUSED && state.activePlayer === Player.LEFT;
     const rightPaused = state.gameStatus === GameStatus.PAUSED && state.activePlayer === Player.RIGHT;
-
-    if (leftActive !== p.leftActive) {
-      this._leftClockEl.classList.toggle('active', leftActive);
-      p.leftActive = leftActive;
-    }
-    if (rightActive !== p.rightActive) {
-      this._rightClockEl.classList.toggle('active', rightActive);
-      p.rightActive = rightActive;
-    }
-    if (leftPaused !== p.leftPaused) {
-      this._leftClockEl.classList.toggle('paused', leftPaused);
-      p.leftPaused = leftPaused;
-    }
-    if (rightPaused !== p.rightPaused) {
-      this._rightClockEl.classList.toggle('paused', rightPaused);
-      p.rightPaused = rightPaused;
-    }
-
-    // Color indicators
-    if (state.leftColor !== p.leftColor) {
-      this._leftColorEl.className = `clock-color piece-${state.leftColor}`;
-      this._leftColorEl.setAttribute('aria-label', state.leftColor);
-      p.leftColor = state.leftColor;
-    }
-    if (state.rightColor !== p.rightColor) {
-      this._rightColorEl.className = `clock-color piece-${state.rightColor}`;
-      this._rightColorEl.setAttribute('aria-label', state.rightColor);
-      p.rightColor = state.rightColor;
-    }
-
-    // Flag states
-    if (state.leftFlagState !== p.leftFlagState) {
-      this._updateFlag(this._leftFlagEl, state.leftFlagState);
-      p.leftFlagState = state.leftFlagState;
-    }
-    if (state.rightFlagState !== p.rightFlagState) {
-      this._updateFlag(this._rightFlagEl, state.rightFlagState);
-      p.rightFlagState = state.rightFlagState;
-    }
-
-    // Move count
-    if (state.showMoves !== p.showMoves || state.leftMoves !== p.leftMoves || state.rightMoves !== p.rightMoves) {
-      if (state.showMoves) {
-        this._leftMovesEl.textContent = `Moves: ${state.leftMoves}`;
-        this._leftMovesEl.classList.remove('hidden');
-        this._rightMovesEl.textContent = `Moves: ${state.rightMoves}`;
-        this._rightMovesEl.classList.remove('hidden');
-      } else {
-        this._leftMovesEl.classList.add('hidden');
-        this._rightMovesEl.classList.add('hidden');
-      }
-      p.showMoves = state.showMoves;
-      p.leftMoves = state.leftMoves;
-      p.rightMoves = state.rightMoves;
-    }
-
-    // Byo-yomi moments
-    if (state.leftByoMoments !== p.leftByoMoments) {
-      if (state.leftByoMoments !== undefined && state.leftByoMoments > 0) {
-        this._leftByoEl.textContent = `\u00D7${state.leftByoMoments}`;
-        this._leftByoEl.classList.remove('hidden');
-      } else {
-        this._leftByoEl.classList.add('hidden');
-      }
-      p.leftByoMoments = state.leftByoMoments;
-    }
-
-    if (state.rightByoMoments !== p.rightByoMoments) {
-      if (state.rightByoMoments !== undefined && state.rightByoMoments > 0) {
-        this._rightByoEl.textContent = `\u00D7${state.rightByoMoments}`;
-        this._rightByoEl.classList.remove('hidden');
-      } else {
-        this._rightByoEl.classList.add('hidden');
-      }
-      p.rightByoMoments = state.rightByoMoments;
-    }
-
-    // Frozen state - only mark the flagged player's clock as frozen
     const leftFrozen = state.gameStatus === GameStatus.FROZEN && state.leftFlagState !== FlagState.NONE;
     const rightFrozen = state.gameStatus === GameStatus.FROZEN && state.rightFlagState !== FlagState.NONE;
-    if (leftFrozen !== p.leftFrozen) {
-      this._leftClockEl.classList.toggle('frozen', leftFrozen);
-      p.leftFrozen = leftFrozen;
-    }
-    if (rightFrozen !== p.rightFrozen) {
-      this._rightClockEl.classList.toggle('frozen', rightFrozen);
-      p.rightFrozen = rightFrozen;
-    }
 
-    // Expired warning (red time)
-    const leftExpired = state.leftTimeMs <= 0 && !leftIsUpcount;
-    const rightExpired = state.rightTimeMs <= 0 && !rightIsUpcount;
-    if (leftExpired !== p.leftExpired) {
-      this._leftTimeEl.classList.toggle('time-expired', leftExpired);
-      p.leftExpired = leftExpired;
-    }
-    if (rightExpired !== p.rightExpired) {
-      this._rightTimeEl.classList.toggle('time-expired', rightExpired);
-      p.rightExpired = rightExpired;
-    }
+    const leftState = {
+      timeMs: state.leftTimeMs,
+      isActive: leftActive,
+      isPaused: leftPaused,
+      isFrozen: leftFrozen,
+      color: state.leftColor,
+      flagState: state.leftFlagState,
+      moves: state.leftMoves,
+      showMoves: state.showMoves,
+      byoMoments: state.leftByoMoments,
+      method: state.leftMethod,
+      gameStatus: state.gameStatus,
+    };
 
-    // Low time warning
-    const leftLow = state.leftTimeMs > 0 && state.leftTimeMs <= 10000 && !leftIsUpcount;
-    const rightLow = state.rightTimeMs > 0 && state.rightTimeMs <= 10000 && !rightIsUpcount;
-    if (leftLow !== p.leftLow) {
-      this._leftTimeEl.classList.toggle('time-low', leftLow);
-      p.leftLow = leftLow;
-    }
-    if (rightLow !== p.rightLow) {
-      this._rightTimeEl.classList.toggle('time-low', rightLow);
-      p.rightLow = rightLow;
+    const rightState = {
+      timeMs: state.rightTimeMs,
+      isActive: rightActive,
+      isPaused: rightPaused,
+      isFrozen: rightFrozen,
+      color: state.rightColor,
+      flagState: state.rightFlagState,
+      moves: state.rightMoves,
+      showMoves: state.showMoves,
+      byoMoments: state.rightByoMoments,
+      method: state.rightMethod,
+      gameStatus: state.gameStatus,
+    };
+
+    const leftResult = this._leftRenderer.update(leftState);
+    const rightResult = this._rightRenderer.update(rightState);
+
+    // For digital renderers, sync font sizes if text length changed
+    if (this._isDigital()) {
+      const needSync = (leftResult && leftResult.needSync) || (rightResult && rightResult.needSync);
+      if (needSync) this._syncFontSizes();
     }
   }
 
   /**
-   * Convert a time string to ghost text (all digits become 8).
-   * e.g. "5:23" -> "8:88", "1:05:23" -> "8:88:88", "3:45.2" -> "8:88.8"
-   * @param {string} timeText
-   * @returns {string}
+   * Clean up resources.
    */
-  _toGhostText(timeText) {
-    return timeText.replace(/\d/g, '8');
-  }
-
-  /**
-   * Update a single flag element.
-   * @param {HTMLElement} el
-   * @param {string} flagState
-   */
-  _updateFlag(el, flagState) {
-    el.classList.remove('flag-blinking', 'flag-solid', 'flag-hidden');
-    switch (flagState) {
-      case FlagState.BLINKING:
-        el.classList.add('flag-blinking');
-        break;
-      case FlagState.NON_BLINKING:
-        el.classList.add('flag-solid');
-        break;
-      default:
-        el.classList.add('flag-hidden');
-        break;
+  destroy() {
+    if (this._resizeObserver) {
+      this._resizeObserver.disconnect();
+      this._resizeObserver = null;
     }
+    if (this._leftRenderer) this._leftRenderer.destroy();
+    if (this._rightRenderer) this._rightRenderer.destroy();
   }
 }
 
@@ -4397,6 +5723,32 @@ class StorageManager {
   }
 
   /**
+   * Save clock face style preference.
+   * @param {string} styleId
+   */
+  static saveClockFace(styleId) {
+    try {
+      localStorage.setItem(StorageKeys.CLOCK_FACE, styleId);
+    } catch (e) {
+      console.warn('Failed to save clock face:', e);
+    }
+  }
+
+  /**
+   * Load clock face style preference.
+   * @returns {string}
+   */
+  static loadClockFace() {
+    try {
+      const val = localStorage.getItem(StorageKeys.CLOCK_FACE);
+      if (val && Object.values(ClockFaceStyle).includes(val)) return val;
+    } catch (e) {
+      console.warn('Failed to load clock face:', e);
+    }
+    return ClockFaceStyle.DIGITAL;
+  }
+
+  /**
    * Create a default custom option config.
    * @returns {object}
    */
@@ -4458,6 +5810,7 @@ class SettingsPanel {
     this._container = containerEl;
     this._onSelect = null;
     this._onClose = null;
+    this._onClockFaceChange = null;
     this._currentView = 'presets'; // 'presets' | 'custom-list' | 'custom-edit'
     this._editingSlot = -1;
     this._editingConfig = null;
@@ -4467,10 +5820,12 @@ class SettingsPanel {
    * Set callbacks.
    * @param {Function} onSelect - (optionConfig, optionNumber) => void
    * @param {Function} onClose - () => void
+   * @param {Function} [onClockFaceChange] - (styleId) => void
    */
-  setCallbacks(onSelect, onClose) {
+  setCallbacks(onSelect, onClose, onClockFaceChange) {
     this._onSelect = onSelect;
     this._onClose = onClose;
+    this._onClockFaceChange = onClockFaceChange || null;
   }
 
   /**
@@ -4537,6 +5892,26 @@ class SettingsPanel {
     header.appendChild(closeBtn);
     panel.appendChild(header);
 
+    // Clock Face selector
+    const faceGroup = document.createElement('div');
+    faceGroup.className = 'settings-font-group';
+    const faceLabel = document.createElement('label');
+    faceLabel.className = 'form-label';
+    faceLabel.textContent = 'Clock Face';
+    const faceSelect = document.createElement('select');
+    faceSelect.className = 'form-input';
+    const currentFace = StorageManager.loadClockFace();
+    for (const style of CLOCK_FACE_STYLES) {
+      const option = document.createElement('option');
+      option.value = style.id;
+      option.textContent = style.name;
+      option.selected = style.id === currentFace;
+      faceSelect.appendChild(option);
+    }
+    faceGroup.appendChild(faceLabel);
+    faceGroup.appendChild(faceSelect);
+    panel.appendChild(faceGroup);
+
     // Font selector
     const fontGroup = document.createElement('div');
     fontGroup.className = 'settings-font-group';
@@ -4562,6 +5937,20 @@ class SettingsPanel {
     });
     fontGroup.appendChild(fontLabel);
     fontGroup.appendChild(fontSelect);
+
+    // Hide font selector when analog face is selected
+    const isDigital = currentFace === ClockFaceStyle.DIGITAL;
+    fontGroup.style.display = isDigital ? '' : 'none';
+
+    faceSelect.addEventListener('change', (e) => {
+      const styleId = e.target.value;
+      StorageManager.saveClockFace(styleId);
+      fontGroup.style.display = styleId === ClockFaceStyle.DIGITAL ? '' : 'none';
+      if (this._onClockFaceChange) {
+        this._onClockFaceChange(styleId);
+      }
+    });
+
     panel.appendChild(fontGroup);
 
     // Tabs
@@ -6563,10 +7952,19 @@ class App {
     this.settingsPanel.setCallbacks(
       (config, optionNumber) => this._selectOption(config, optionNumber),
       () => {},
+      (styleId) => this._setClockFace(styleId),
     );
 
     // Set up timer engine
     this.timerEngine.setTickCallback(this._onTick);
+
+    // Load saved clock face style
+    const savedFace = StorageManager.loadClockFace();
+    if (savedFace !== ClockFaceStyle.DIGITAL) {
+      this.clockDisplay.setClockFaceStyle(savedFace);
+      // Re-bind clock faces after rebuild
+      this._rebindClockFaces();
+    }
 
     // Load saved clock font
     const savedFontId = StorageManager.loadFont();
@@ -7032,6 +8430,24 @@ class App {
       btn.textContent = icons[newTheme] || '\u25D0';
       btn.title = `Theme: ${newTheme}`;
     }
+  }
+
+  /**
+   * Set the clock face style.
+   * @param {string} styleId - ClockFaceStyle value
+   */
+  _setClockFace(styleId) {
+    this.clockDisplay.setClockFaceStyle(styleId);
+    this._rebindClockFaces();
+    this._updateDisplay();
+  }
+
+  /**
+   * Re-bind clock face elements to the input handler after a renderer swap.
+   */
+  _rebindClockFaces() {
+    const faces = this.clockDisplay.getClockFaces();
+    this.inputHandler.bindClockFaces(faces.left, faces.right);
   }
 
   /**

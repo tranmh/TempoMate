@@ -8,7 +8,7 @@
  * - Sound enabled state
  */
 
-import { StorageKeys, Limits, TimingMethodType, ClockFont } from '../utils/constants.js';
+import { StorageKeys, Limits, TimingMethodType, ClockFont, ClockFaceStyle } from '../utils/constants.js';
 
 export class StorageManager {
   /**
@@ -211,6 +211,32 @@ export class StorageManager {
       console.warn('Failed to load rotation:', e);
     }
     return null;
+  }
+
+  /**
+   * Save clock face style preference.
+   * @param {string} styleId
+   */
+  static saveClockFace(styleId) {
+    try {
+      localStorage.setItem(StorageKeys.CLOCK_FACE, styleId);
+    } catch (e) {
+      console.warn('Failed to save clock face:', e);
+    }
+  }
+
+  /**
+   * Load clock face style preference.
+   * @returns {string}
+   */
+  static loadClockFace() {
+    try {
+      const val = localStorage.getItem(StorageKeys.CLOCK_FACE);
+      if (val && Object.values(ClockFaceStyle).includes(val)) return val;
+    } catch (e) {
+      console.warn('Failed to load clock face:', e);
+    }
+    return ClockFaceStyle.DIGITAL;
   }
 
   /**

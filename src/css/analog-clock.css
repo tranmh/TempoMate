@@ -1,0 +1,434 @@
+/* ============================================
+   Analog Clock Styles - Garde & Insa
+   ============================================ */
+
+/* ===== Shared Analog Base ===== */
+.analog-clock {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.analog-svg {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+/* Hide digital divider in analog mode */
+.clock-container.analog-mode::after {
+  display: none;
+}
+
+/* ===== Hidden utility for SVG elements ===== */
+.analog-svg .hidden {
+  display: none;
+}
+
+/* ============================================
+   Garde - Classic German Precision Clock
+   Ref: Garde Classic — light beech wood, white
+   dial, black hands, black numerals, red Klappe,
+   red seconds marker at 3 o'clock.
+   ============================================ */
+
+/* Wood housing: light beech with grain texture */
+.garde-housing {
+  fill: #c8a876;
+  stroke: #9e7e52;
+  stroke-width: 1.5;
+}
+
+/* Subtle wood-grain overlay via repeating stripes */
+.garde-clock .garde-housing {
+  fill: #c8a876;
+  filter: url(#garde-grain);
+}
+
+/* Dial: clean white */
+.garde-dial {
+  fill: #ffffff;
+  stroke: #1a1a1a;
+  stroke-width: 1.5;
+}
+
+/* Dial border ring: thin black, glows green when active */
+.garde-dial-border {
+  fill: none;
+  stroke: #1a1a1a;
+  stroke-width: 1.5;
+  transition: stroke 0.3s ease, filter 0.3s ease;
+}
+
+.garde-dial-active {
+  stroke: #4caf50;
+  filter: drop-shadow(0 0 4px rgba(76, 175, 80, 0.4));
+}
+
+/* Hour markers: black, prominent */
+.garde-marker-hour {
+  stroke: #000;
+  stroke-width: 2.2;
+  stroke-linecap: butt;
+}
+
+/* Minute markers: thin black ticks */
+.garde-marker-minute {
+  stroke: #000;
+  stroke-width: 0.7;
+  stroke-linecap: butt;
+}
+
+/* Red seconds/time marker at 3 o'clock */
+.garde-sec-marker {
+  fill: #cc0000;
+}
+
+/* Numerals: elegant serif, black */
+.garde-numerals text {
+  font-family: 'Georgia', 'Times New Roman', 'Palatino Linotype', serif;
+  font-size: 14px;
+  font-weight: 400;
+  fill: #000;
+}
+
+/* Hands: black, slim */
+.garde-hand-hour {
+  stroke: #000;
+  stroke-width: 2.8;
+  stroke-linecap: round;
+  transition: stroke 0.2s ease;
+}
+
+.garde-hand-minute {
+  stroke: #000;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  transition: stroke 0.2s ease;
+}
+
+/* Seconds hand: red, thin, ticking */
+.garde-hand-seconds {
+  stroke: #cc0000;
+  stroke-width: 1;
+  stroke-linecap: round;
+}
+
+/* Center pin: black */
+.garde-pin {
+  fill: #111;
+  stroke: #000;
+  stroke-width: 0.5;
+}
+
+/* Red flag / Klappe (wedge between 11-12) */
+.garde-flag {
+  fill: #cc0000;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.garde-flag.flag-raised {
+  opacity: 0.9;
+}
+
+.garde-flag.flag-fallen {
+  opacity: 0.25;
+}
+
+.garde-flag.flag-fallen-blink {
+  opacity: 0.25;
+  animation: analog-flag-blink 0.5s ease-in-out infinite;
+}
+
+/* LED indicator */
+.garde-led {
+  fill: #888;
+  transition: fill 0.2s ease, filter 0.2s ease;
+}
+
+.garde-led.led-active {
+  fill: #4caf50;
+  filter: drop-shadow(0 0 4px rgba(76, 175, 80, 0.6));
+}
+
+.garde-led.led-paused {
+  fill: #f9a825;
+  filter: drop-shadow(0 0 4px rgba(249, 168, 37, 0.6));
+}
+
+.garde-led.led-frozen {
+  fill: #ef5350;
+  filter: drop-shadow(0 0 4px rgba(239, 83, 80, 0.6));
+}
+
+/* Color indicator */
+.garde-color-indicator {
+  stroke: #333;
+  stroke-width: 1.5;
+  fill: none;
+}
+
+.garde-color-indicator.piece-white {
+  fill: none;
+}
+
+.garde-color-indicator.piece-black {
+  fill: #111;
+}
+
+/* Info text */
+.garde-info-text {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 8px;
+  fill: #333;
+}
+
+/* Low time: hands turn orange */
+.garde-hand-hour.hand-low,
+.garde-hand-minute.hand-low {
+  stroke: #e65100;
+}
+
+/* Expired: hands turn red */
+.garde-hand-hour.hand-expired,
+.garde-hand-minute.hand-expired {
+  stroke: #cc0000;
+}
+
+/* ============================================
+   Insa - Yugoslav Tournament Clock
+   ============================================ */
+
+/* Wood housing: darker walnut */
+.insa-housing {
+  fill: #6b4226;
+  stroke: #4a2d15;
+  stroke-width: 2;
+}
+
+/* Brass trim */
+.insa-trim {
+  fill: none;
+  stroke: #b8860b;
+  stroke-width: 1.5;
+}
+
+/* Dial: off-white */
+.insa-dial {
+  fill: #f5f0e0;
+  stroke: #b8860b;
+  stroke-width: 1.5;
+}
+
+.insa-dial-border {
+  fill: none;
+  stroke: #b8860b;
+  stroke-width: 2;
+  transition: stroke 0.3s ease, filter 0.3s ease;
+}
+
+.insa-dial-active {
+  stroke: #4caf50;
+  filter: drop-shadow(0 0 5px rgba(76, 175, 80, 0.5));
+}
+
+/* Hour markers: bolder */
+.insa-marker-hour {
+  stroke: #222;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+
+.insa-marker-minute {
+  stroke: #888;
+  stroke-width: 1;
+  stroke-linecap: round;
+}
+
+/* Numerals: bold sans-serif */
+.insa-numerals text {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  fill: #222;
+}
+
+/* Hands: thicker than Garde */
+.insa-hand-hour {
+  stroke: #111;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  transition: stroke 0.2s ease;
+}
+
+.insa-hand-minute {
+  stroke: #222;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  transition: stroke 0.2s ease;
+}
+
+/* Center pin: larger, brass */
+.insa-pin {
+  fill: #b8860b;
+  stroke: #8b6914;
+  stroke-width: 0.8;
+}
+
+/* Red flag */
+.insa-flag {
+  fill: #c41e3a;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.insa-flag.flag-raised {
+  opacity: 0.85;
+}
+
+.insa-flag.flag-fallen {
+  opacity: 0.3;
+}
+
+.insa-flag.flag-fallen-blink {
+  opacity: 0.3;
+  animation: analog-flag-blink 0.5s ease-in-out infinite;
+}
+
+/* Oscillating bar */
+.insa-oscillator {
+  fill: #b8860b;
+  transform-origin: 100px 191px;
+  transition: opacity 0.3s ease;
+}
+
+.insa-oscillator.oscillating {
+  animation: oscillate 1s ease-in-out infinite;
+}
+
+/* LED indicator */
+.insa-led {
+  fill: #555;
+  transition: fill 0.2s ease, filter 0.2s ease;
+}
+
+.insa-led.led-active {
+  fill: #4caf50;
+  filter: drop-shadow(0 0 4px rgba(76, 175, 80, 0.6));
+}
+
+.insa-led.led-paused {
+  fill: #f9a825;
+  filter: drop-shadow(0 0 4px rgba(249, 168, 37, 0.6));
+}
+
+.insa-led.led-frozen {
+  fill: #ef5350;
+  filter: drop-shadow(0 0 4px rgba(239, 83, 80, 0.6));
+}
+
+/* Color indicator */
+.insa-color-indicator {
+  stroke: #555;
+  stroke-width: 1.5;
+  fill: none;
+}
+
+.insa-color-indicator.piece-white {
+  fill: none;
+}
+
+.insa-color-indicator.piece-black {
+  fill: #333;
+}
+
+/* Info text */
+.insa-info-text {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 8px;
+  fill: #666;
+}
+
+/* Low time / expired hand colors */
+.insa-hand-hour.hand-low,
+.insa-hand-minute.hand-low {
+  stroke: #f9a825;
+}
+
+.insa-hand-hour.hand-expired,
+.insa-hand-minute.hand-expired {
+  stroke: #ef5350;
+}
+
+/* ============================================
+   Animations
+   ============================================ */
+
+@keyframes analog-flag-blink {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 0.15; }
+}
+
+@keyframes oscillate {
+  0%, 100% { transform: rotate(-8deg); }
+  50% { transform: rotate(8deg); }
+}
+
+/* ============================================
+   Dark Theme Overrides
+   ============================================ */
+
+[data-theme="dark"] .garde-housing {
+  fill: #9e7e52;
+}
+
+[data-theme="dark"] .garde-dial {
+  fill: #f0f0f0;
+  stroke: #333;
+}
+
+[data-theme="dark"] .garde-dial-border {
+  stroke: #333;
+}
+
+[data-theme="dark"] .garde-numerals text {
+  fill: #111;
+}
+
+[data-theme="dark"] .garde-marker-hour {
+  stroke: #111;
+}
+
+[data-theme="dark"] .garde-marker-minute {
+  stroke: #333;
+}
+
+[data-theme="dark"] .garde-color-indicator {
+  stroke: #aaa;
+}
+
+[data-theme="dark"] .garde-info-text {
+  fill: #aaa;
+}
+
+[data-theme="dark"] .insa-housing {
+  fill: #4a2d15;
+}
+
+[data-theme="dark"] .insa-dial {
+  fill: #e0dac8;
+}
+
+[data-theme="dark"] .insa-numerals text {
+  fill: #333;
+}
+
+[data-theme="dark"] .insa-color-indicator {
+  stroke: #888;
+}
+
+[data-theme="dark"] .insa-info-text {
+  fill: #888;
+}

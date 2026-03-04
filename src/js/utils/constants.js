@@ -49,6 +49,20 @@ export const Limits = Object.freeze({
   FLAG_DISPLAY_DURATION_MS: 300000, // 5 minutes
 });
 
+/** Clock face style identifiers */
+export const ClockFaceStyle = Object.freeze({
+  DIGITAL: 'digital',
+  GARDE: 'garde',
+  INSA: 'insa',
+});
+
+/** Clock face style display definitions */
+export const CLOCK_FACE_STYLES = Object.freeze([
+  { id: ClockFaceStyle.DIGITAL, name: 'Digital LCD' },
+  { id: ClockFaceStyle.GARDE, name: 'Garde (Analog)' },
+  { id: ClockFaceStyle.INSA, name: 'Insa (Analog)' },
+]);
+
 /** Clock font identifiers */
 export const ClockFont = Object.freeze({
   DSEG7_CLASSIC: 'dseg7-classic',
@@ -109,4 +123,5 @@ export const StorageKeys = Object.freeze({
   SOUND_ENABLED: 'tempomate_sound',
   FONT: 'tempomate_font',
   ROTATION: 'tempomate_rotation',
+  CLOCK_FACE: 'tempomate_clock_face',
 });

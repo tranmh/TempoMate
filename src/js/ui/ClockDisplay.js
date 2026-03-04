@@ -1,17 +1,14 @@
 /**
  * ClockDisplay - Renders the clock face for both players
  *
- * Displays:
- * - Large time digits for each player
- * - Active/inactive player highlighting
- * - Flag indicators
- * - Color indicators (white/black piece)
- * - Move count (on demand)
- * - Byo-yomi moments remaining
+ * Delegates per-side rendering to a ClockRenderer instance (digital, Garde, Insa).
+ * Manages container structure, ResizeObserver, and coordinated font sizing.
  */
 
-import { formatTime } from '../utils/TimeFormatter.js';
-import { Player, FlagState, GameStatus, TimingMethodType } from '../utils/constants.js';
+import { Player, FlagState, GameStatus, TimingMethodType, ClockFaceStyle } from '../utils/constants.js';
+import { DigitalClockRenderer } from './renderers/DigitalClockRenderer.js';
+import { GardeClockRenderer } from './renderers/GardeClockRenderer.js';
+import { InsaClockRenderer } from './renderers/InsaClockRenderer.js';
 
 export class ClockDisplay {
   /**
@@ -24,82 +21,128 @@ export class ClockDisplay {
     this._leftClockEl = null;
     /** @type {HTMLElement} */
     this._rightClockEl = null;
-    /** @type {HTMLElement} */
-    this._leftTimeEl = null;
-    /** @type {HTMLElement} */
-    this._rightTimeEl = null;
-    /** @type {HTMLElement} */
-    this._leftFlagEl = null;
-    /** @type {HTMLElement} */
-    this._rightFlagEl = null;
-    /** @type {HTMLElement} */
-    this._leftColorEl = null;
-    /** @type {HTMLElement} */
-    this._rightColorEl = null;
-    /** @type {HTMLElement} */
-    this._leftMovesEl = null;
-    /** @type {HTMLElement} */
-    this._rightMovesEl = null;
-    /** @type {HTMLElement} */
-    this._leftByoEl = null;
-    /** @type {HTMLElement} */
-    this._rightByoEl = null;
-    /** @type {HTMLElement} */
-    this._leftGhostEl = null;
-    /** @type {HTMLElement} */
-    this._rightGhostEl = null;
-    /** @type {HTMLElement} */
-    this._leftLedEl = null;
-    /** @type {HTMLElement} */
-    this._rightLedEl = null;
 
-    // Auto-size state
-    this._leftTextLen = 0;
-    this._rightTextLen = 0;
+    /** @type {import('./renderers/ClockRenderer.js').ClockRenderer} */
+    this._leftRenderer = null;
+    /** @type {import('./renderers/ClockRenderer.js').ClockRenderer} */
+    this._rightRenderer = null;
+
+    /** @type {string} */
+    this._rendererType = ClockFaceStyle.DIGITAL;
+
+    // Auto-size state (digital only)
     this._resizeObserver = null;
-
-    // Dirty-checking cache for update()
-    this._prev = {};
-
-    // ResizeObserver dimension tracking
     this._leftDims = { w: 0, h: 0 };
     this._rightDims = { w: 0, h: 0 };
-
-    // Font size cache: "w,h,len" -> fontSize
     this._fontSizeCache = new Map();
+
+    // Dirty-checking cache for container-level state
+    this._prev = {};
 
     this._build();
   }
 
+  /**
+   * Build the clock container and initial renderers.
+   */
   _build() {
     this._container.innerHTML = '';
     this._container.classList.add('clock-container');
 
-    // Left clock
-    this._leftClockEl = this._createClockFace('left');
-    // Right clock
-    this._rightClockEl = this._createClockFace('right');
+    // Create clock face containers
+    this._leftClockEl = this._createClockFaceContainer('left');
+    this._rightClockEl = this._createClockFaceContainer('right');
 
     this._container.appendChild(this._leftClockEl);
     this._container.appendChild(this._rightClockEl);
 
-    // Store references
-    this._leftTimeEl = this._leftClockEl.querySelector('.clock-time');
-    this._rightTimeEl = this._rightClockEl.querySelector('.clock-time');
-    this._leftFlagEl = this._leftClockEl.querySelector('.clock-flag');
-    this._rightFlagEl = this._rightClockEl.querySelector('.clock-flag');
-    this._leftColorEl = this._leftClockEl.querySelector('.clock-color');
-    this._rightColorEl = this._rightClockEl.querySelector('.clock-color');
-    this._leftMovesEl = this._leftClockEl.querySelector('.clock-moves');
-    this._rightMovesEl = this._rightClockEl.querySelector('.clock-moves');
-    this._leftByoEl = this._leftClockEl.querySelector('.clock-byo');
-    this._rightByoEl = this._rightClockEl.querySelector('.clock-byo');
-    this._leftGhostEl = this._leftClockEl.querySelector('.clock-ghost');
-    this._rightGhostEl = this._rightClockEl.querySelector('.clock-ghost');
-    this._leftLedEl = this._leftClockEl.querySelector('.led-indicator');
-    this._rightLedEl = this._rightClockEl.querySelector('.led-indicator');
+    // Create renderers and build interiors
+    this._leftRenderer = this._createRenderer(this._rendererType);
+    this._rightRenderer = this._createRenderer(this._rendererType);
+    this._leftRenderer.build(this._leftClockEl, 'left');
+    this._rightRenderer.build(this._rightClockEl, 'right');
 
     this._initAutoSize();
+  }
+
+  /**
+   * Create a clock face container element (the outer shell).
+   * @param {string} side
+   * @returns {HTMLElement}
+   */
+  _createClockFaceContainer(side) {
+    const clock = document.createElement('div');
+    clock.className = `clock-face clock-${side}`;
+    clock.setAttribute('data-side', side);
+    clock.setAttribute('role', 'button');
+    clock.setAttribute('tabindex', '0');
+    clock.setAttribute('aria-label', `${side} player clock`);
+    return clock;
+  }
+
+  /**
+   * Create a renderer instance by style ID.
+   * @param {string} styleId - ClockFaceStyle value
+   * @returns {import('./renderers/ClockRenderer.js').ClockRenderer}
+   */
+  _createRenderer(styleId) {
+    switch (styleId) {
+      case ClockFaceStyle.GARDE:
+        return new GardeClockRenderer();
+      case ClockFaceStyle.INSA:
+        return new InsaClockRenderer();
+      case ClockFaceStyle.DIGITAL:
+      default:
+        return new DigitalClockRenderer();
+    }
+  }
+
+  /**
+   * Switch the clock face style. Tears down current renderers and rebuilds.
+   * @param {string} styleId - ClockFaceStyle value
+   */
+  setClockFaceStyle(styleId) {
+    if (styleId === this._rendererType) return;
+    this._rendererType = styleId;
+
+    // Destroy current renderers
+    if (this._leftRenderer) this._leftRenderer.destroy();
+    if (this._rightRenderer) this._rightRenderer.destroy();
+
+    // Clear clock face interiors (keep the containers)
+    this._leftClockEl.innerHTML = '';
+    this._rightClockEl.innerHTML = '';
+
+    // Reset dirty-check caches
+    this._prev = {};
+    this._fontSizeCache.clear();
+
+    // Create new renderers
+    this._leftRenderer = this._createRenderer(styleId);
+    this._rightRenderer = this._createRenderer(styleId);
+    this._leftRenderer.build(this._leftClockEl, 'left');
+    this._rightRenderer.build(this._rightClockEl, 'right');
+
+    // Toggle container class for analog vs digital styling
+    const isAnalog = styleId !== ClockFaceStyle.DIGITAL;
+    this._container.classList.toggle('analog-mode', isAnalog);
+
+    // Re-sync sizing
+    if (this._isDigital()) {
+      requestAnimationFrame(() => this._syncFontSizes());
+    } else {
+      requestAnimationFrame(() => {
+        this._leftRenderer.onResize(this._leftClockEl.clientWidth, this._leftClockEl.clientHeight);
+        this._rightRenderer.onResize(this._rightClockEl.clientWidth, this._rightClockEl.clientHeight);
+      });
+    }
+  }
+
+  /**
+   * @returns {boolean} Whether current renderer is digital
+   */
+  _isDigital() {
+    return this._rendererType === ClockFaceStyle.DIGITAL;
   }
 
   /**
@@ -118,24 +161,31 @@ export class ClockDisplay {
         dims.h = h;
         changed = true;
       }
-      if (changed) this._syncFontSizes();
+      if (changed) {
+        if (this._isDigital()) {
+          this._syncFontSizes();
+        } else {
+          this._leftRenderer.onResize(this._leftDims.w, this._leftDims.h);
+          this._rightRenderer.onResize(this._rightDims.w, this._rightDims.h);
+        }
+      }
     });
 
     this._resizeObserver.observe(this._leftClockEl);
     this._resizeObserver.observe(this._rightClockEl);
 
-    // Initial fit after layout
     requestAnimationFrame(() => {
-      this._syncFontSizes();
+      if (this._isDigital()) {
+        this._syncFontSizes();
+      }
     });
   }
 
   /**
    * Binary-search for the largest font-size that fits within the container.
-   * Returns the computed size without applying it.
-   * @param {HTMLElement} container - The clock face element
-   * @param {HTMLElement} textEl - The time text element
-   * @returns {number} The computed font size in px, or 0 if container has no size
+   * @param {HTMLElement} container
+   * @param {HTMLElement} textEl
+   * @returns {number}
    */
   _computeFitSize(container, textEl) {
     const containerW = container.clientWidth;
@@ -169,9 +219,9 @@ export class ClockDisplay {
 
   /**
    * Apply a font size to a clock face's time and ghost elements.
-   * @param {HTMLElement} container - The clock face element
-   * @param {HTMLElement} textEl - The time text element
-   * @param {number} size - Font size in px
+   * @param {HTMLElement} container
+   * @param {HTMLElement} textEl
+   * @param {number} size
    */
   _applyFontSize(container, textEl, size) {
     textEl.style.fontSize = size + 'px';
@@ -180,94 +230,29 @@ export class ClockDisplay {
   }
 
   /**
-   * Compute optimal font sizes for both sides and apply the minimum
-   * so both clocks always display at the same size.
+   * Compute optimal font sizes for both sides and apply the minimum.
    */
   _syncFontSizes() {
-    const leftSize = this._computeFitSize(this._leftClockEl, this._leftTimeEl);
-    const rightSize = this._computeFitSize(this._rightClockEl, this._rightTimeEl);
+    if (!this._isDigital()) return;
+
+    const leftTimeEl = this._leftRenderer.getTimeElement();
+    const rightTimeEl = this._rightRenderer.getTimeElement();
+    if (!leftTimeEl || !rightTimeEl) return;
+
+    const leftSize = this._computeFitSize(this._leftClockEl, leftTimeEl);
+    const rightSize = this._computeFitSize(this._rightClockEl, rightTimeEl);
     if (leftSize === 0 || rightSize === 0) return;
 
     const size = Math.min(leftSize, rightSize);
-    this._applyFontSize(this._leftClockEl, this._leftTimeEl, size);
-    this._applyFontSize(this._rightClockEl, this._rightTimeEl, size);
+    this._applyFontSize(this._leftClockEl, leftTimeEl, size);
+    this._applyFontSize(this._rightClockEl, rightTimeEl, size);
   }
 
   /**
-   * Clear the font size cache so sizes recompute on next sync.
+   * Clear the font size cache.
    */
   clearFontSizeCache() {
     this._fontSizeCache.clear();
-  }
-
-  /**
-   * Create a single clock face element.
-   * @param {string} side
-   * @returns {HTMLElement}
-   */
-  _createClockFace(side) {
-    const clock = document.createElement('div');
-    clock.className = `clock-face clock-${side}`;
-    clock.setAttribute('data-side', side);
-    clock.setAttribute('role', 'button');
-    clock.setAttribute('tabindex', '0');
-    clock.setAttribute('aria-label', `${side} player clock`);
-
-    // Flag indicator
-    const flag = document.createElement('div');
-    flag.className = 'clock-flag flag-hidden';
-    flag.textContent = '\u2691'; // Flag
-
-    // LED indicator
-    const led = document.createElement('div');
-    led.className = 'led-indicator';
-
-    // Color indicator
-    const color = document.createElement('div');
-    color.className = 'clock-color';
-
-    // Header row (flag + LED + color)
-    const header = document.createElement('div');
-    header.className = 'clock-header';
-    header.appendChild(flag);
-    header.appendChild(led);
-    header.appendChild(color);
-
-    // Time wrapper (holds ghost + real time)
-    const timeWrapper = document.createElement('div');
-    timeWrapper.className = 'time-wrapper';
-
-    // Ghost segments (unlit LCD segments behind real digits)
-    const ghost = document.createElement('div');
-    ghost.className = 'clock-ghost';
-    ghost.textContent = '8:88';
-
-    // Time display
-    const time = document.createElement('div');
-    time.className = 'clock-time';
-    time.textContent = '0:00';
-
-    timeWrapper.appendChild(ghost);
-    timeWrapper.appendChild(time);
-
-    // Footer row (moves + byo)
-    const footer = document.createElement('div');
-    footer.className = 'clock-footer';
-
-    const moves = document.createElement('div');
-    moves.className = 'clock-moves hidden';
-
-    const byo = document.createElement('div');
-    byo.className = 'clock-byo hidden';
-
-    footer.appendChild(moves);
-    footer.appendChild(byo);
-
-    clock.appendChild(header);
-    clock.appendChild(timeWrapper);
-    clock.appendChild(footer);
-
-    return clock;
   }
 
   /**
@@ -275,10 +260,13 @@ export class ClockDisplay {
    * @returns {{ left: HTMLElement, right: HTMLElement }}
    */
   getFlagElements() {
-    return {
-      left: this._leftFlagEl,
-      right: this._rightFlagEl,
-    };
+    if (this._isDigital()) {
+      return {
+        left: this._leftRenderer.getFlagElement(),
+        right: this._rightRenderer.getFlagElement(),
+      };
+    }
+    return { left: null, right: null };
   }
 
   /**
@@ -294,206 +282,63 @@ export class ClockDisplay {
 
   /**
    * Update the display for both players.
-   * @param {object} state
-   * @param {number} state.leftTimeMs
-   * @param {number} state.rightTimeMs
-   * @param {string} state.activePlayer - Player.LEFT, Player.RIGHT, or null
-   * @param {string} state.gameStatus
-   * @param {string} state.leftColor - 'white' or 'black'
-   * @param {string} state.rightColor - 'white' or 'black'
-   * @param {string} state.leftFlagState
-   * @param {string} state.rightFlagState
-   * @param {number} state.leftMoves
-   * @param {number} state.rightMoves
-   * @param {boolean} state.showMoves
-   * @param {number} [state.leftByoMoments]
-   * @param {number} [state.rightByoMoments]
-   * @param {string} [state.leftMethod]
-   * @param {string} [state.rightMethod]
+   * @param {object} state - Full state from app._updateDisplay()
    */
   update(state) {
-    const p = this._prev;
-
-    // Time display
-    const leftIsUpcount = state.leftMethod === TimingMethodType.UPCOUNT;
-    const rightIsUpcount = state.rightMethod === TimingMethodType.UPCOUNT;
-
-    const leftText = formatTime(state.leftTimeMs, !leftIsUpcount);
-    const rightText = formatTime(state.rightTimeMs, !rightIsUpcount);
-
-    let needSync = false;
-
-    if (leftText !== p.leftText) {
-      this._leftTimeEl.textContent = leftText;
-      p.leftText = leftText;
-
-      // Re-fit text if length changed (e.g. "5:00" -> "4:59:59")
-      if (leftText.length !== this._leftTextLen) {
-        this._leftTextLen = leftText.length;
-        this._leftGhostEl.textContent = this._toGhostText(leftText);
-        needSync = true;
-      }
-    }
-
-    if (rightText !== p.rightText) {
-      this._rightTimeEl.textContent = rightText;
-      p.rightText = rightText;
-
-      if (rightText.length !== this._rightTextLen) {
-        this._rightTextLen = rightText.length;
-        this._rightGhostEl.textContent = this._toGhostText(rightText);
-        needSync = true;
-      }
-    }
-
-    if (needSync) this._syncFontSizes();
-
-    // Active player highlighting
     const leftActive = state.activePlayer === Player.LEFT && state.gameStatus === GameStatus.RUNNING;
     const rightActive = state.activePlayer === Player.RIGHT && state.gameStatus === GameStatus.RUNNING;
     const leftPaused = state.gameStatus === GameStatus.PAUSED && state.activePlayer === Player.LEFT;
     const rightPaused = state.gameStatus === GameStatus.PAUSED && state.activePlayer === Player.RIGHT;
-
-    if (leftActive !== p.leftActive) {
-      this._leftClockEl.classList.toggle('active', leftActive);
-      p.leftActive = leftActive;
-    }
-    if (rightActive !== p.rightActive) {
-      this._rightClockEl.classList.toggle('active', rightActive);
-      p.rightActive = rightActive;
-    }
-    if (leftPaused !== p.leftPaused) {
-      this._leftClockEl.classList.toggle('paused', leftPaused);
-      p.leftPaused = leftPaused;
-    }
-    if (rightPaused !== p.rightPaused) {
-      this._rightClockEl.classList.toggle('paused', rightPaused);
-      p.rightPaused = rightPaused;
-    }
-
-    // Color indicators
-    if (state.leftColor !== p.leftColor) {
-      this._leftColorEl.className = `clock-color piece-${state.leftColor}`;
-      this._leftColorEl.setAttribute('aria-label', state.leftColor);
-      p.leftColor = state.leftColor;
-    }
-    if (state.rightColor !== p.rightColor) {
-      this._rightColorEl.className = `clock-color piece-${state.rightColor}`;
-      this._rightColorEl.setAttribute('aria-label', state.rightColor);
-      p.rightColor = state.rightColor;
-    }
-
-    // Flag states
-    if (state.leftFlagState !== p.leftFlagState) {
-      this._updateFlag(this._leftFlagEl, state.leftFlagState);
-      p.leftFlagState = state.leftFlagState;
-    }
-    if (state.rightFlagState !== p.rightFlagState) {
-      this._updateFlag(this._rightFlagEl, state.rightFlagState);
-      p.rightFlagState = state.rightFlagState;
-    }
-
-    // Move count
-    if (state.showMoves !== p.showMoves || state.leftMoves !== p.leftMoves || state.rightMoves !== p.rightMoves) {
-      if (state.showMoves) {
-        this._leftMovesEl.textContent = `Moves: ${state.leftMoves}`;
-        this._leftMovesEl.classList.remove('hidden');
-        this._rightMovesEl.textContent = `Moves: ${state.rightMoves}`;
-        this._rightMovesEl.classList.remove('hidden');
-      } else {
-        this._leftMovesEl.classList.add('hidden');
-        this._rightMovesEl.classList.add('hidden');
-      }
-      p.showMoves = state.showMoves;
-      p.leftMoves = state.leftMoves;
-      p.rightMoves = state.rightMoves;
-    }
-
-    // Byo-yomi moments
-    if (state.leftByoMoments !== p.leftByoMoments) {
-      if (state.leftByoMoments !== undefined && state.leftByoMoments > 0) {
-        this._leftByoEl.textContent = `\u00D7${state.leftByoMoments}`;
-        this._leftByoEl.classList.remove('hidden');
-      } else {
-        this._leftByoEl.classList.add('hidden');
-      }
-      p.leftByoMoments = state.leftByoMoments;
-    }
-
-    if (state.rightByoMoments !== p.rightByoMoments) {
-      if (state.rightByoMoments !== undefined && state.rightByoMoments > 0) {
-        this._rightByoEl.textContent = `\u00D7${state.rightByoMoments}`;
-        this._rightByoEl.classList.remove('hidden');
-      } else {
-        this._rightByoEl.classList.add('hidden');
-      }
-      p.rightByoMoments = state.rightByoMoments;
-    }
-
-    // Frozen state - only mark the flagged player's clock as frozen
     const leftFrozen = state.gameStatus === GameStatus.FROZEN && state.leftFlagState !== FlagState.NONE;
     const rightFrozen = state.gameStatus === GameStatus.FROZEN && state.rightFlagState !== FlagState.NONE;
-    if (leftFrozen !== p.leftFrozen) {
-      this._leftClockEl.classList.toggle('frozen', leftFrozen);
-      p.leftFrozen = leftFrozen;
-    }
-    if (rightFrozen !== p.rightFrozen) {
-      this._rightClockEl.classList.toggle('frozen', rightFrozen);
-      p.rightFrozen = rightFrozen;
-    }
 
-    // Expired warning (red time)
-    const leftExpired = state.leftTimeMs <= 0 && !leftIsUpcount;
-    const rightExpired = state.rightTimeMs <= 0 && !rightIsUpcount;
-    if (leftExpired !== p.leftExpired) {
-      this._leftTimeEl.classList.toggle('time-expired', leftExpired);
-      p.leftExpired = leftExpired;
-    }
-    if (rightExpired !== p.rightExpired) {
-      this._rightTimeEl.classList.toggle('time-expired', rightExpired);
-      p.rightExpired = rightExpired;
-    }
+    const leftState = {
+      timeMs: state.leftTimeMs,
+      isActive: leftActive,
+      isPaused: leftPaused,
+      isFrozen: leftFrozen,
+      color: state.leftColor,
+      flagState: state.leftFlagState,
+      moves: state.leftMoves,
+      showMoves: state.showMoves,
+      byoMoments: state.leftByoMoments,
+      method: state.leftMethod,
+      gameStatus: state.gameStatus,
+    };
 
-    // Low time warning
-    const leftLow = state.leftTimeMs > 0 && state.leftTimeMs <= 10000 && !leftIsUpcount;
-    const rightLow = state.rightTimeMs > 0 && state.rightTimeMs <= 10000 && !rightIsUpcount;
-    if (leftLow !== p.leftLow) {
-      this._leftTimeEl.classList.toggle('time-low', leftLow);
-      p.leftLow = leftLow;
-    }
-    if (rightLow !== p.rightLow) {
-      this._rightTimeEl.classList.toggle('time-low', rightLow);
-      p.rightLow = rightLow;
+    const rightState = {
+      timeMs: state.rightTimeMs,
+      isActive: rightActive,
+      isPaused: rightPaused,
+      isFrozen: rightFrozen,
+      color: state.rightColor,
+      flagState: state.rightFlagState,
+      moves: state.rightMoves,
+      showMoves: state.showMoves,
+      byoMoments: state.rightByoMoments,
+      method: state.rightMethod,
+      gameStatus: state.gameStatus,
+    };
+
+    const leftResult = this._leftRenderer.update(leftState);
+    const rightResult = this._rightRenderer.update(rightState);
+
+    // For digital renderers, sync font sizes if text length changed
+    if (this._isDigital()) {
+      const needSync = (leftResult && leftResult.needSync) || (rightResult && rightResult.needSync);
+      if (needSync) this._syncFontSizes();
     }
   }
 
   /**
-   * Convert a time string to ghost text (all digits become 8).
-   * e.g. "5:23" -> "8:88", "1:05:23" -> "8:88:88", "3:45.2" -> "8:88.8"
-   * @param {string} timeText
-   * @returns {string}
+   * Clean up resources.
    */
-  _toGhostText(timeText) {
-    return timeText.replace(/\d/g, '8');
-  }
-
-  /**
-   * Update a single flag element.
-   * @param {HTMLElement} el
-   * @param {string} flagState
-   */
-  _updateFlag(el, flagState) {
-    el.classList.remove('flag-blinking', 'flag-solid', 'flag-hidden');
-    switch (flagState) {
-      case FlagState.BLINKING:
-        el.classList.add('flag-blinking');
-        break;
-      case FlagState.NON_BLINKING:
-        el.classList.add('flag-solid');
-        break;
-      default:
-        el.classList.add('flag-hidden');
-        break;
+  destroy() {
+    if (this._resizeObserver) {
+      this._resizeObserver.disconnect();
+      this._resizeObserver = null;
     }
+    if (this._leftRenderer) this._leftRenderer.destroy();
+    if (this._rightRenderer) this._rightRenderer.destroy();
   }
 }
