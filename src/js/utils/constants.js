@@ -115,6 +115,14 @@ export const UIConfig = Object.freeze({
   DEBOUNCE_MS: 100,
 });
 
+/** Motion sensor configuration */
+export const MotionConfig = Object.freeze({
+  DEFAULT_THRESHOLD: 10,
+  MIN_THRESHOLD: 5,
+  MAX_THRESHOLD: 45,
+  HYSTERESIS_RATIO: 0.5,
+});
+
 /** localStorage keys */
 export const StorageKeys = Object.freeze({
   CUSTOM_OPTIONS: 'tempomate_custom_options',
@@ -124,4 +132,6 @@ export const StorageKeys = Object.freeze({
   FONT: 'tempomate_font',
   ROTATION: 'tempomate_rotation',
   CLOCK_FACE: 'tempomate_clock_face',
+  MOTION_ENABLED: 'tempomate_motion_enabled',
+  MOTION_THRESHOLD: 'tempomate_motion_threshold',
 });

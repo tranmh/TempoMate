@@ -1977,6 +1977,14 @@ const UIConfig = Object.freeze({
   DEBOUNCE_MS: 100,
 });
 
+/** Motion sensor configuration */
+const MotionConfig = Object.freeze({
+  DEFAULT_THRESHOLD: 10,
+  MIN_THRESHOLD: 5,
+  MAX_THRESHOLD: 45,
+  HYSTERESIS_RATIO: 0.5,
+});
+
 /** localStorage keys */
 const StorageKeys = Object.freeze({
   CUSTOM_OPTIONS: 'tempomate_custom_options',
@@ -1986,6 +1994,8 @@ const StorageKeys = Object.freeze({
   FONT: 'tempomate_font',
   ROTATION: 'tempomate_rotation',
   CLOCK_FACE: 'tempomate_clock_face',
+  MOTION_ENABLED: 'tempomate_motion_enabled',
+  MOTION_THRESHOLD: 'tempomate_motion_threshold',
 });
 
 // --- js/state/PlayerState.js ---
@@ -5749,6 +5759,60 @@ class StorageManager {
   }
 
   /**
+   * Save motion sensor enabled state.
+   * @param {boolean} enabled
+   */
+  static saveMotionEnabled(enabled) {
+    try {
+      localStorage.setItem(StorageKeys.MOTION_ENABLED, String(enabled));
+    } catch (e) {
+      console.warn('Failed to save motion enabled:', e);
+    }
+  }
+
+  /**
+   * Load motion sensor enabled state.
+   * @returns {boolean}
+   */
+  static loadMotionEnabled() {
+    try {
+      return localStorage.getItem(StorageKeys.MOTION_ENABLED) === 'true';
+    } catch (e) {
+      console.warn('Failed to load motion enabled:', e);
+    }
+    return false;
+  }
+
+  /**
+   * Save motion sensor threshold.
+   * @param {number} degrees
+   */
+  static saveMotionThreshold(degrees) {
+    try {
+      localStorage.setItem(StorageKeys.MOTION_THRESHOLD, String(degrees));
+    } catch (e) {
+      console.warn('Failed to save motion threshold:', e);
+    }
+  }
+
+  /**
+   * Load motion sensor threshold.
+   * @returns {number}
+   */
+  static loadMotionThreshold() {
+    try {
+      const val = localStorage.getItem(StorageKeys.MOTION_THRESHOLD);
+      if (val) {
+        const num = parseInt(val, 10);
+        if (num >= MotionConfig.MIN_THRESHOLD && num <= MotionConfig.MAX_THRESHOLD) return num;
+      }
+    } catch (e) {
+      console.warn('Failed to load motion threshold:', e);
+    }
+    return MotionConfig.DEFAULT_THRESHOLD;
+  }
+
+  /**
    * Create a default custom option config.
    * @returns {object}
    */
@@ -5773,6 +5837,147 @@ class StorageManager {
     } catch (e) {
       console.warn('Failed to clear storage:', e);
     }
+  }
+}
+
+// --- js/input/MotionSensor.js ---
+/**
+ * MotionSensor - Tilt-based turn switching via deviceorientation API
+ *
+ * Listens to the device's gamma axis (left/right tilt) and fires a callback
+ * when the tilt exceeds a configurable threshold. Uses hysteresis to prevent
+ * repeated triggers when holding at an angle.
+ *
+ * State machine: idle → triggered → (return to center) → idle
+ */
+
+
+class MotionSensor {
+  /**
+   * @param {object} options
+   * @param {Function} options.onTilt - Callback fired with 'left' or 'right'
+   * @param {number} [options.threshold] - Tilt angle in degrees to trigger
+   */
+  constructor({ onTilt, threshold = MotionConfig.DEFAULT_THRESHOLD }) {
+    this._onTilt = onTilt;
+    this._threshold = threshold;
+    this._enabled = false;
+    this._triggered = null; // null | 'left' | 'right'
+    this._onDeviceOrientation = this._onDeviceOrientation.bind(this);
+  }
+
+  /**
+   * Check if the deviceorientation API is available.
+   * @returns {boolean}
+   */
+  static isSupported() {
+    return typeof window !== 'undefined' && 'DeviceOrientationEvent' in window;
+  }
+
+  /**
+   * Check if iOS 13+ permission request is needed.
+   * @returns {boolean}
+   */
+  static needsPermissionRequest() {
+    return typeof DeviceOrientationEvent !== 'undefined' &&
+      typeof DeviceOrientationEvent.requestPermission === 'function';
+  }
+
+  /**
+   * Request permission on iOS 13+.
+   * Must be called from a user gesture handler.
+   * @returns {Promise<boolean>} true if granted
+   */
+  static async requestPermission() {
+    if (!MotionSensor.needsPermissionRequest()) return true;
+    try {
+      const result = await DeviceOrientationEvent.requestPermission();
+      return result === 'granted';
+    } catch (e) {
+      console.warn('Motion sensor permission request failed:', e);
+      return false;
+    }
+  }
+
+  /**
+   * Enable the motion sensor and start listening to device orientation events.
+   */
+  enable() {
+    if (this._enabled) return;
+    this._enabled = true;
+    this._triggered = null;
+    window.addEventListener('deviceorientation', this._onDeviceOrientation);
+  }
+
+  /**
+   * Disable the motion sensor and stop listening.
+   */
+  disable() {
+    if (!this._enabled) return;
+    this._enabled = false;
+    this._triggered = null;
+    window.removeEventListener('deviceorientation', this._onDeviceOrientation);
+  }
+
+  /**
+   * Update the tilt threshold.
+   * @param {number} degrees
+   */
+  setThreshold(degrees) {
+    this._threshold = Math.max(MotionConfig.MIN_THRESHOLD, Math.min(degrees, MotionConfig.MAX_THRESHOLD));
+  }
+
+  /**
+   * Get the current threshold.
+   * @returns {number}
+   */
+  getThreshold() {
+    return this._threshold;
+  }
+
+  /**
+   * Check if currently enabled.
+   * @returns {boolean}
+   */
+  isEnabled() {
+    return this._enabled;
+  }
+
+  /**
+   * Handle deviceorientation events.
+   * @param {DeviceOrientationEvent} event
+   */
+  _onDeviceOrientation(event) {
+    const gamma = event.gamma; // left/right tilt in degrees (-90 to 90)
+    if (gamma === null || gamma === undefined) return;
+
+    const hysteresis = this._threshold * MotionConfig.HYSTERESIS_RATIO;
+
+    if (this._triggered === null) {
+      // Idle state — check for threshold crossing
+      if (gamma <= -this._threshold) {
+        this._triggered = 'left';
+        this._onTilt('left');
+      } else if (gamma >= this._threshold) {
+        this._triggered = 'right';
+        this._onTilt('right');
+      }
+    } else {
+      // Triggered state — wait for return to center (within hysteresis band)
+      if (this._triggered === 'left' && gamma > -hysteresis) {
+        this._triggered = null;
+      } else if (this._triggered === 'right' && gamma < hysteresis) {
+        this._triggered = null;
+      }
+    }
+  }
+
+  /**
+   * Clean up resources.
+   */
+  destroy() {
+    this.disable();
+    this._onTilt = null;
   }
 }
 
@@ -5811,6 +6016,8 @@ class SettingsPanel {
     this._onSelect = null;
     this._onClose = null;
     this._onClockFaceChange = null;
+    this._onMotionEnabledChange = null;
+    this._onMotionThresholdChange = null;
     this._currentView = 'presets'; // 'presets' | 'custom-list' | 'custom-edit'
     this._editingSlot = -1;
     this._editingConfig = null;
@@ -5821,11 +6028,15 @@ class SettingsPanel {
    * @param {Function} onSelect - (optionConfig, optionNumber) => void
    * @param {Function} onClose - () => void
    * @param {Function} [onClockFaceChange] - (styleId) => void
+   * @param {Function} [onMotionEnabledChange] - (enabled) => void
+   * @param {Function} [onMotionThresholdChange] - (degrees) => void
    */
-  setCallbacks(onSelect, onClose, onClockFaceChange) {
+  setCallbacks(onSelect, onClose, onClockFaceChange, onMotionEnabledChange, onMotionThresholdChange) {
     this._onSelect = onSelect;
     this._onClose = onClose;
     this._onClockFaceChange = onClockFaceChange || null;
+    this._onMotionEnabledChange = onMotionEnabledChange || null;
+    this._onMotionThresholdChange = onMotionThresholdChange || null;
   }
 
   /**
@@ -5952,6 +6163,81 @@ class SettingsPanel {
     });
 
     panel.appendChild(fontGroup);
+
+    // Motion sensor section
+    if (MotionSensor.isSupported()) {
+      const motionGroup = document.createElement('div');
+      motionGroup.className = 'settings-font-group';
+
+      const motionLabel = document.createElement('label');
+      motionLabel.className = 'form-label';
+      const motionCheck = document.createElement('input');
+      motionCheck.type = 'checkbox';
+      motionCheck.checked = StorageManager.loadMotionEnabled();
+      motionLabel.appendChild(motionCheck);
+      motionLabel.appendChild(document.createTextNode(' Motion sensor (tilt to switch)'));
+      motionGroup.appendChild(motionLabel);
+
+      // Threshold input (only visible when enabled)
+      const thresholdRow = document.createElement('div');
+      thresholdRow.className = 'form-group';
+      thresholdRow.style.display = motionCheck.checked ? '' : 'none';
+      thresholdRow.style.marginTop = '6px';
+
+      const thresholdLabel = document.createElement('label');
+      thresholdLabel.className = 'form-label';
+      thresholdLabel.textContent = 'Tilt threshold';
+      const thresholdInput = document.createElement('input');
+      thresholdInput.type = 'number';
+      thresholdInput.className = 'form-input form-input-time';
+      thresholdInput.min = MotionConfig.MIN_THRESHOLD;
+      thresholdInput.max = MotionConfig.MAX_THRESHOLD;
+      thresholdInput.value = StorageManager.loadMotionThreshold();
+      const degLabel = document.createElement('span');
+      degLabel.textContent = '\u00B0';
+
+      thresholdRow.appendChild(thresholdLabel);
+      thresholdRow.appendChild(thresholdInput);
+      thresholdRow.appendChild(degLabel);
+      motionGroup.appendChild(thresholdRow);
+
+      // iOS permission button
+      if (MotionSensor.needsPermissionRequest()) {
+        const permBtn = document.createElement('button');
+        permBtn.className = 'btn btn-secondary btn-sm';
+        permBtn.textContent = 'Grant motion permission';
+        permBtn.style.marginTop = '6px';
+        permBtn.style.display = motionCheck.checked ? '' : 'none';
+        permBtn.addEventListener('click', async () => {
+          const granted = await MotionSensor.requestPermission();
+          permBtn.textContent = granted ? 'Permission granted' : 'Permission denied';
+          permBtn.disabled = true;
+        });
+        motionGroup.appendChild(permBtn);
+
+        motionCheck.addEventListener('change', () => {
+          permBtn.style.display = motionCheck.checked ? '' : 'none';
+        });
+      }
+
+      motionCheck.addEventListener('change', () => {
+        thresholdRow.style.display = motionCheck.checked ? '' : 'none';
+        if (this._onMotionEnabledChange) {
+          this._onMotionEnabledChange(motionCheck.checked);
+        }
+      });
+
+      thresholdInput.addEventListener('change', () => {
+        const val = parseInt(thresholdInput.value, 10);
+        if (val >= MotionConfig.MIN_THRESHOLD && val <= MotionConfig.MAX_THRESHOLD) {
+          if (this._onMotionThresholdChange) {
+            this._onMotionThresholdChange(val);
+          }
+        }
+      });
+
+      panel.appendChild(motionGroup);
+    }
 
     // Tabs
     const tabs = document.createElement('div');
@@ -7918,6 +8204,9 @@ class App {
     this.settingsPanel = null;
     this.correctionMode = null;
 
+    // Motion sensor (lazy init)
+    this.motionSensor = null;
+
     // State flags
     this._showingMoves = false;
     this._wakeLockManager = new WakeLockManager();
@@ -7953,6 +8242,8 @@ class App {
       (config, optionNumber) => this._selectOption(config, optionNumber),
       () => {},
       (styleId) => this._setClockFace(styleId),
+      (enabled) => this._setMotionEnabled(enabled),
+      (degrees) => this._setMotionThreshold(degrees),
     );
 
     // Set up timer engine
@@ -7973,12 +8264,61 @@ class App {
       document.documentElement.style.setProperty('--clock-font', fontDef.family);
     }
 
+    // Set up motion sensor
+    this._setupMotionSensor();
+
     // Load last option or default to option 1
     const lastOption = StorageManager.loadLastOption();
     this._loadOption(lastOption);
 
     // Initial render
     this._updateDisplay();
+  }
+
+  /**
+   * Set up the motion sensor if supported and enabled.
+   */
+  _setupMotionSensor() {
+    if (!MotionSensor.isSupported()) return;
+    if (!StorageManager.loadMotionEnabled()) return;
+
+    const threshold = StorageManager.loadMotionThreshold();
+    this.motionSensor = new MotionSensor({
+      onTilt: (side) => this._handleClockTap(side),
+      threshold,
+    });
+    this.motionSensor.enable();
+  }
+
+  /**
+   * Enable or disable the motion sensor.
+   * @param {boolean} enabled
+   */
+  _setMotionEnabled(enabled) {
+    StorageManager.saveMotionEnabled(enabled);
+    if (enabled) {
+      if (!this.motionSensor) {
+        const threshold = StorageManager.loadMotionThreshold();
+        this.motionSensor = new MotionSensor({
+          onTilt: (side) => this._handleClockTap(side),
+          threshold,
+        });
+      }
+      this.motionSensor.enable();
+    } else if (this.motionSensor) {
+      this.motionSensor.disable();
+    }
+  }
+
+  /**
+   * Update the motion sensor threshold.
+   * @param {number} degrees
+   */
+  _setMotionThreshold(degrees) {
+    StorageManager.saveMotionThreshold(degrees);
+    if (this.motionSensor) {
+      this.motionSensor.setThreshold(degrees);
+    }
   }
 
   /**
@@ -8543,6 +8883,10 @@ class App {
     this.themeManager.destroy();
     this.rotationManager = null;
     this.inputHandler.destroy();
+    if (this.motionSensor) {
+      this.motionSensor.destroy();
+      this.motionSensor = null;
+    }
     this._wakeLockManager.destroy();
   }
 }
