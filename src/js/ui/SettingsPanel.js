@@ -10,7 +10,8 @@
 
 import { presets, getPreset } from '../presets/presets.js';
 import { StorageManager } from '../storage/StorageManager.js';
-import { TimingMethodType, Limits, CLOCK_FONTS, CLOCK_FACE_STYLES, ClockFaceStyle } from '../utils/constants.js';
+import { TimingMethodType, Limits, CLOCK_FONTS, CLOCK_FACE_STYLES, ClockFaceStyle, MotionConfig } from '../utils/constants.js';
+import { MotionSensor } from '../input/MotionSensor.js';
 import { formatTimeShort } from '../utils/TimeFormatter.js';
 
 const METHOD_NAMES = {
@@ -36,6 +37,8 @@ export class SettingsPanel {
     this._onSelect = null;
     this._onClose = null;
     this._onClockFaceChange = null;
+    this._onMotionEnabledChange = null;
+    this._onMotionThresholdChange = null;
     this._currentView = 'presets'; // 'presets' | 'custom-list' | 'custom-edit'
     this._editingSlot = -1;
     this._editingConfig = null;
@@ -46,11 +49,15 @@ export class SettingsPanel {
    * @param {Function} onSelect - (optionConfig, optionNumber) => void
    * @param {Function} onClose - () => void
    * @param {Function} [onClockFaceChange] - (styleId) => void
+   * @param {Function} [onMotionEnabledChange] - (enabled) => void
+   * @param {Function} [onMotionThresholdChange] - (degrees) => void
    */
-  setCallbacks(onSelect, onClose, onClockFaceChange) {
+  setCallbacks(onSelect, onClose, onClockFaceChange, onMotionEnabledChange, onMotionThresholdChange) {
     this._onSelect = onSelect;
     this._onClose = onClose;
     this._onClockFaceChange = onClockFaceChange || null;
+    this._onMotionEnabledChange = onMotionEnabledChange || null;
+    this._onMotionThresholdChange = onMotionThresholdChange || null;
   }
 
   /**
@@ -177,6 +184,81 @@ export class SettingsPanel {
     });
 
     panel.appendChild(fontGroup);
+
+    // Motion sensor section
+    if (MotionSensor.isSupported()) {
+      const motionGroup = document.createElement('div');
+      motionGroup.className = 'settings-font-group';
+
+      const motionLabel = document.createElement('label');
+      motionLabel.className = 'form-label';
+      const motionCheck = document.createElement('input');
+      motionCheck.type = 'checkbox';
+      motionCheck.checked = StorageManager.loadMotionEnabled();
+      motionLabel.appendChild(motionCheck);
+      motionLabel.appendChild(document.createTextNode(' Motion sensor (tilt to switch)'));
+      motionGroup.appendChild(motionLabel);
+
+      // Threshold input (only visible when enabled)
+      const thresholdRow = document.createElement('div');
+      thresholdRow.className = 'form-group';
+      thresholdRow.style.display = motionCheck.checked ? '' : 'none';
+      thresholdRow.style.marginTop = '6px';
+
+      const thresholdLabel = document.createElement('label');
+      thresholdLabel.className = 'form-label';
+      thresholdLabel.textContent = 'Tilt threshold';
+      const thresholdInput = document.createElement('input');
+      thresholdInput.type = 'number';
+      thresholdInput.className = 'form-input form-input-time';
+      thresholdInput.min = MotionConfig.MIN_THRESHOLD;
+      thresholdInput.max = MotionConfig.MAX_THRESHOLD;
+      thresholdInput.value = StorageManager.loadMotionThreshold();
+      const degLabel = document.createElement('span');
+      degLabel.textContent = '\u00B0';
+
+      thresholdRow.appendChild(thresholdLabel);
+      thresholdRow.appendChild(thresholdInput);
+      thresholdRow.appendChild(degLabel);
+      motionGroup.appendChild(thresholdRow);
+
+      // iOS permission button
+      if (MotionSensor.needsPermissionRequest()) {
+        const permBtn = document.createElement('button');
+        permBtn.className = 'btn btn-secondary btn-sm';
+        permBtn.textContent = 'Grant motion permission';
+        permBtn.style.marginTop = '6px';
+        permBtn.style.display = motionCheck.checked ? '' : 'none';
+        permBtn.addEventListener('click', async () => {
+          const granted = await MotionSensor.requestPermission();
+          permBtn.textContent = granted ? 'Permission granted' : 'Permission denied';
+          permBtn.disabled = true;
+        });
+        motionGroup.appendChild(permBtn);
+
+        motionCheck.addEventListener('change', () => {
+          permBtn.style.display = motionCheck.checked ? '' : 'none';
+        });
+      }
+
+      motionCheck.addEventListener('change', () => {
+        thresholdRow.style.display = motionCheck.checked ? '' : 'none';
+        if (this._onMotionEnabledChange) {
+          this._onMotionEnabledChange(motionCheck.checked);
+        }
+      });
+
+      thresholdInput.addEventListener('change', () => {
+        const val = parseInt(thresholdInput.value, 10);
+        if (val >= MotionConfig.MIN_THRESHOLD && val <= MotionConfig.MAX_THRESHOLD) {
+          if (this._onMotionThresholdChange) {
+            this._onMotionThresholdChange(val);
+          }
+        }
+      });
+
+      panel.appendChild(motionGroup);
+    }
 
     // Tabs
     const tabs = document.createElement('div');

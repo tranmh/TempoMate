@@ -8,7 +8,7 @@
  * - Sound enabled state
  */
 
-import { StorageKeys, Limits, TimingMethodType, ClockFont, ClockFaceStyle } from '../utils/constants.js';
+import { StorageKeys, Limits, TimingMethodType, ClockFont, ClockFaceStyle, MotionConfig } from '../utils/constants.js';
 
 export class StorageManager {
   /**
@@ -237,6 +237,60 @@ export class StorageManager {
       console.warn('Failed to load clock face:', e);
     }
     return ClockFaceStyle.DIGITAL;
+  }
+
+  /**
+   * Save motion sensor enabled state.
+   * @param {boolean} enabled
+   */
+  static saveMotionEnabled(enabled) {
+    try {
+      localStorage.setItem(StorageKeys.MOTION_ENABLED, String(enabled));
+    } catch (e) {
+      console.warn('Failed to save motion enabled:', e);
+    }
+  }
+
+  /**
+   * Load motion sensor enabled state.
+   * @returns {boolean}
+   */
+  static loadMotionEnabled() {
+    try {
+      return localStorage.getItem(StorageKeys.MOTION_ENABLED) === 'true';
+    } catch (e) {
+      console.warn('Failed to load motion enabled:', e);
+    }
+    return false;
+  }
+
+  /**
+   * Save motion sensor threshold.
+   * @param {number} degrees
+   */
+  static saveMotionThreshold(degrees) {
+    try {
+      localStorage.setItem(StorageKeys.MOTION_THRESHOLD, String(degrees));
+    } catch (e) {
+      console.warn('Failed to save motion threshold:', e);
+    }
+  }
+
+  /**
+   * Load motion sensor threshold.
+   * @returns {number}
+   */
+  static loadMotionThreshold() {
+    try {
+      const val = localStorage.getItem(StorageKeys.MOTION_THRESHOLD);
+      if (val) {
+        const num = parseInt(val, 10);
+        if (num >= MotionConfig.MIN_THRESHOLD && num <= MotionConfig.MAX_THRESHOLD) return num;
+      }
+    } catch (e) {
+      console.warn('Failed to load motion threshold:', e);
+    }
+    return MotionConfig.DEFAULT_THRESHOLD;
   }
 
   /**

@@ -17,6 +17,7 @@ import { SoundManager } from './ui/SoundManager.js';
 import { ThemeManager } from './ui/ThemeManager.js';
 import { RotationManager } from './ui/RotationManager.js';
 import { InputHandler } from './input/InputHandler.js';
+import { MotionSensor } from './input/MotionSensor.js';
 import { StorageManager } from './storage/StorageManager.js';
 import { getPreset } from './presets/presets.js';
 import { GameStatus, Player, FlagState, TimingMethodType, CLOCK_FONTS, Limits, ClockFaceStyle } from './utils/constants.js';
@@ -39,6 +40,9 @@ export class App {
     this.statusBar = null;
     this.settingsPanel = null;
     this.correctionMode = null;
+
+    // Motion sensor (lazy init)
+    this.motionSensor = null;
 
     // State flags
     this._showingMoves = false;
@@ -75,6 +79,8 @@ export class App {
       (config, optionNumber) => this._selectOption(config, optionNumber),
       () => {},
       (styleId) => this._setClockFace(styleId),
+      (enabled) => this._setMotionEnabled(enabled),
+      (degrees) => this._setMotionThreshold(degrees),
     );
 
     // Set up timer engine
@@ -95,12 +101,61 @@ export class App {
       document.documentElement.style.setProperty('--clock-font', fontDef.family);
     }
 
+    // Set up motion sensor
+    this._setupMotionSensor();
+
     // Load last option or default to option 1
     const lastOption = StorageManager.loadLastOption();
     this._loadOption(lastOption);
 
     // Initial render
     this._updateDisplay();
+  }
+
+  /**
+   * Set up the motion sensor if supported and enabled.
+   */
+  _setupMotionSensor() {
+    if (!MotionSensor.isSupported()) return;
+    if (!StorageManager.loadMotionEnabled()) return;
+
+    const threshold = StorageManager.loadMotionThreshold();
+    this.motionSensor = new MotionSensor({
+      onTilt: (side) => this._handleClockTap(side),
+      threshold,
+    });
+    this.motionSensor.enable();
+  }
+
+  /**
+   * Enable or disable the motion sensor.
+   * @param {boolean} enabled
+   */
+  _setMotionEnabled(enabled) {
+    StorageManager.saveMotionEnabled(enabled);
+    if (enabled) {
+      if (!this.motionSensor) {
+        const threshold = StorageManager.loadMotionThreshold();
+        this.motionSensor = new MotionSensor({
+          onTilt: (side) => this._handleClockTap(side),
+          threshold,
+        });
+      }
+      this.motionSensor.enable();
+    } else if (this.motionSensor) {
+      this.motionSensor.disable();
+    }
+  }
+
+  /**
+   * Update the motion sensor threshold.
+   * @param {number} degrees
+   */
+  _setMotionThreshold(degrees) {
+    StorageManager.saveMotionThreshold(degrees);
+    if (this.motionSensor) {
+      this.motionSensor.setThreshold(degrees);
+    }
   }
 
   /**
@@ -665,6 +720,10 @@ export class App {
     this.themeManager.destroy();
     this.rotationManager = null;
     this.inputHandler.destroy();
+    if (this.motionSensor) {
+      this.motionSensor.destroy();
+      this.motionSensor = null;
+    }
     this._wakeLockManager.destroy();
   }
 }
