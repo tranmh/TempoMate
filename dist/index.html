@@ -817,6 +817,34 @@ body {
   font-weight: 600;
 }
 
+/* ===== Turn Indicator Bar ===== */
+.clock-face.active::before,
+.clock-face.paused::before,
+.clock-face.frozen::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 30px;
+  z-index: 2;
+}
+
+.clock-face.active::before {
+  background: #4caf50;
+  box-shadow: 0 2px 12px rgba(76, 175, 80, 0.5);
+}
+
+.clock-face.paused::before {
+  background: #f9a825;
+  box-shadow: 0 2px 12px rgba(249, 168, 37, 0.5);
+}
+
+.clock-face.frozen::before {
+  background: #ef5350;
+  box-shadow: 0 2px 12px rgba(239, 83, 80, 0.5);
+}
+
 /* ===== Utility ===== */
 .hidden {
   display: none !important;

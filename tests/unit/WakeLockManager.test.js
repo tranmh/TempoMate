@@ -7,6 +7,10 @@ describe('WakeLockManager', () => {
   beforeEach(() => {
     // Remove native wakeLock to test both paths
     delete navigator.wakeLock;
+
+    // jsdom doesn't implement HTMLMediaElement play/pause
+    HTMLMediaElement.prototype.play = jest.fn().mockResolvedValue(undefined);
+    HTMLMediaElement.prototype.pause = jest.fn();
   });
 
   afterEach(() => {
