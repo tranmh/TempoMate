@@ -10,7 +10,7 @@
 
 import { presets, getPreset } from '../presets/presets.js';
 import { StorageManager } from '../storage/StorageManager.js';
-import { TimingMethodType, Limits, CLOCK_FONTS } from '../utils/constants.js';
+import { TimingMethodType, Limits, CLOCK_FONTS, CLOCK_FACE_STYLES, ClockFaceStyle } from '../utils/constants.js';
 import { formatTimeShort } from '../utils/TimeFormatter.js';
 
 const METHOD_NAMES = {
@@ -35,6 +35,7 @@ export class SettingsPanel {
     this._container = containerEl;
     this._onSelect = null;
     this._onClose = null;
+    this._onClockFaceChange = null;
     this._currentView = 'presets'; // 'presets' | 'custom-list' | 'custom-edit'
     this._editingSlot = -1;
     this._editingConfig = null;
@@ -44,10 +45,12 @@ export class SettingsPanel {
    * Set callbacks.
    * @param {Function} onSelect - (optionConfig, optionNumber) => void
    * @param {Function} onClose - () => void
+   * @param {Function} [onClockFaceChange] - (styleId) => void
    */
-  setCallbacks(onSelect, onClose) {
+  setCallbacks(onSelect, onClose, onClockFaceChange) {
     this._onSelect = onSelect;
     this._onClose = onClose;
+    this._onClockFaceChange = onClockFaceChange || null;
   }
 
   /**
@@ -114,6 +117,26 @@ export class SettingsPanel {
     header.appendChild(closeBtn);
     panel.appendChild(header);
 
+    // Clock Face selector
+    const faceGroup = document.createElement('div');
+    faceGroup.className = 'settings-font-group';
+    const faceLabel = document.createElement('label');
+    faceLabel.className = 'form-label';
+    faceLabel.textContent = 'Clock Face';
+    const faceSelect = document.createElement('select');
+    faceSelect.className = 'form-input';
+    const currentFace = StorageManager.loadClockFace();
+    for (const style of CLOCK_FACE_STYLES) {
+      const option = document.createElement('option');
+      option.value = style.id;
+      option.textContent = style.name;
+      option.selected = style.id === currentFace;
+      faceSelect.appendChild(option);
+    }
+    faceGroup.appendChild(faceLabel);
+    faceGroup.appendChild(faceSelect);
+    panel.appendChild(faceGroup);
+
     // Font selector
     const fontGroup = document.createElement('div');
     fontGroup.className = 'settings-font-group';
@@ -139,6 +162,20 @@ export class SettingsPanel {
     });
     fontGroup.appendChild(fontLabel);
     fontGroup.appendChild(fontSelect);
+
+    // Hide font selector when analog face is selected
+    const isDigital = currentFace === ClockFaceStyle.DIGITAL;
+    fontGroup.style.display = isDigital ? '' : 'none';
+
+    faceSelect.addEventListener('change', (e) => {
+      const styleId = e.target.value;
+      StorageManager.saveClockFace(styleId);
+      fontGroup.style.display = styleId === ClockFaceStyle.DIGITAL ? '' : 'none';
+      if (this._onClockFaceChange) {
+        this._onClockFaceChange(styleId);
+      }
+    });
+
     panel.appendChild(fontGroup);
 
     // Tabs
