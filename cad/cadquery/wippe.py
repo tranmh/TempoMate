@@ -41,13 +41,15 @@ def wippe_verstaerkung():
     half_bot = (verstaerkung_breite - 2 * verstaerkung_hoehe) / 2
 
     # Trapezoidal XZ cross-section, extruded along Y
+    # XZ plane normal points in -Y, so extrude goes -Y; shift to align with plate (Y=0..wippe_breite)
     result = (cq.Workplane("XZ")
               .moveTo(mitte_x - half_top, 0)
               .lineTo(mitte_x + half_top, 0)
               .lineTo(mitte_x + half_bot, -verstaerkung_hoehe)
               .lineTo(mitte_x - half_bot, -verstaerkung_hoehe)
               .close()
-              .extrude(wippe_breite))
+              .extrude(wippe_breite)
+              .translate((0, wippe_breite, 0)))
     return result
 
 
@@ -83,7 +85,7 @@ def wippe_nut():
     tasche_y1 = sy - tasche_wand
     tasche_y2 = sy + slot_breite + tasche_wand
 
-    result = cq.Workplane("XY").box(0.001, 0.001, 0.001)  # seed
+    grooves = []
 
     # Groove before the pocket
     len1 = tasche_y1 + 0.1
@@ -92,7 +94,7 @@ def wippe_nut():
               .circle(nut_r).extrude(len1)
               .rotate((0, 0, 0), (1, 0, 0), -90)
               .translate((mitte_x, -0.1, -verstaerkung_hoehe)))
-        result = result.union(g1)
+        grooves.append(g1)
 
     # Groove after the pocket
     len2 = wippe_breite - tasche_y2 + 0.1
@@ -101,8 +103,14 @@ def wippe_nut():
               .circle(nut_r).extrude(len2)
               .rotate((0, 0, 0), (1, 0, 0), -90)
               .translate((mitte_x, tasche_y2, -verstaerkung_hoehe)))
-        result = result.union(g2)
+        grooves.append(g2)
 
+    if not grooves:
+        return cq.Workplane("XY")
+
+    result = grooves[0]
+    for g in grooves[1:]:
+        result = result.union(g)
     return result
 
 
@@ -113,7 +121,7 @@ def lehne_loecher():
     abstand = slot_laenge / (lehne_zapfen_anzahl + 1)
     durchsteck = lehne_zapfen_tiefe - wippe_hoehe
 
-    result = cq.Workplane("XY").box(0.001, 0.001, 0.001)  # seed
+    parts = []
 
     for i in range(1, lehne_zapfen_anzahl + 1):
         loch_x = sx + i * abstand
@@ -136,8 +144,15 @@ def lehne_loecher():
                                  sy - tol,
                                  -(durchsteck + 0.5))))
 
-        result = result.union(hole).union(nub_clear)
+        parts.append(hole)
+        parts.append(nub_clear)
 
+    if not parts:
+        return cq.Workplane("XY")
+
+    result = parts[0]
+    for p in parts[1:]:
+        result = result.union(p)
     return result
 
 

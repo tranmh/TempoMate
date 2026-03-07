@@ -41,21 +41,20 @@ def pivot_steg():
     steg_start = mitte_y - pivot_breite / 2
     steg_ende = mitte_y + pivot_breite / 2
 
-    result = cq.Workplane("XY").box(0.001, 0.001, 0.001)  # seed solid
+    segments = []
 
     # Segment 1: before the pocket
     len1 = schlitz_y_start - steg_start
     if len1 > 0:
-        # Pivot cylinder along Y
         cyl1 = (cq.Workplane("XY")
                 .circle(pivot_radius).extrude(len1)
                 .rotate((0, 0, 0), (1, 0, 0), -90)
                 .translate((mitte_x, steg_start, basis_hoehe - verstaerkung_hoehe)))
-        # Support wall
         wall1 = (cq.Workplane("XY")
                  .box(wand_d, len1, basis_hoehe - verstaerkung_hoehe, centered=False)
                  .translate((mitte_x - wand_d / 2, steg_start, 0)))
-        result = result.union(cyl1).union(wall1)
+        segments.append(cyl1)
+        segments.append(wall1)
 
     # Segment 2: after the pocket
     len2 = steg_ende - schlitz_y_ende
@@ -67,8 +66,15 @@ def pivot_steg():
         wall2 = (cq.Workplane("XY")
                  .box(wand_d, len2, basis_hoehe - verstaerkung_hoehe, centered=False)
                  .translate((mitte_x - wand_d / 2, schlitz_y_ende, 0)))
-        result = result.union(cyl2).union(wall2)
+        segments.append(cyl2)
+        segments.append(wall2)
 
+    if not segments:
+        return cq.Workplane("XY")
+
+    result = segments[0]
+    for seg in segments[1:]:
+        result = result.union(seg)
     return result
 
 

@@ -19,35 +19,43 @@ def lehne_form(l, d, h, r):
 
 def make_nub_left(cx, z_base, nub, nub_h, d):
     """Linke Rastnase mit 45-Grad-Einfuehrrampe.
-    Approximation of the OpenSCAD hull() geometry."""
+    Approximation of the OpenSCAD hull() geometry.
+    Profile overlaps 0.1mm into the tenon to ensure solid fusion."""
     z0 = z_base
     z1 = z_base + nub / 2
     z2 = z1 + nub_h
+    overlap = 0.1
 
     # XZ profile of the nub (wedge shape), extruded along Y
+    # XZ plane normal is -Y, so extrude goes in -Y; translate to align with tenon (Y=0..d)
     result = (cq.Workplane("XZ")
-              .moveTo(cx, z0)
+              .moveTo(cx + overlap, z0)
               .lineTo(cx - nub, z1)
               .lineTo(cx - nub, z2)
-              .lineTo(cx, z2)
+              .lineTo(cx + overlap, z2)
               .close()
-              .extrude(d))
+              .extrude(d)
+              .translate((0, d, 0)))
     return result
 
 
 def make_nub_right(cx, z_base, nub, nub_h, d):
-    """Rechte Rastnase mit 45-Grad-Einfuehrrampe."""
+    """Rechte Rastnase mit 45-Grad-Einfuehrrampe.
+    Profile overlaps 0.1mm into the tenon to ensure solid fusion."""
     z0 = z_base
     z1 = z_base + nub / 2
     z2 = z1 + nub_h
+    overlap = 0.1
 
+    # XZ plane normal is -Y, so extrude goes in -Y; translate to align with tenon (Y=0..d)
     result = (cq.Workplane("XZ")
-              .moveTo(cx, z0)
+              .moveTo(cx - overlap, z0)
               .lineTo(cx + nub, z1)
               .lineTo(cx + nub, z2)
-              .lineTo(cx, z2)
+              .lineTo(cx - overlap, z2)
               .close()
-              .extrude(d))
+              .extrude(d)
+              .translate((0, d, 0)))
     return result
 
 
