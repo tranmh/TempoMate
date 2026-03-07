@@ -155,6 +155,11 @@ src/
 tests/
   unit/                   Jest unit tests (12 files, 115+ tests)
   e2e/                    Playwright E2E tests (5 files)
+cad/
+  scad_files/             Original OpenSCAD source files
+  cadquery/               CadQuery (Python) port with pytest test suite
+  step/                   Exported STEP files (generated via cadquery2step.sh)
+  cadquery2step.sh        Batch convert CadQuery → STEP
 ```
 
 ### Design Principles
@@ -164,6 +169,15 @@ tests/
 - **Pub/sub state management** -- `GameState.onChange()` notifies UI components of state changes
 - **Layered architecture** -- engine (logic), state (data), UI (rendering), input (events) are cleanly separated
 - **High-precision timing** -- `requestAnimationFrame` + `performance.now()` with visibility change handling for background tabs
+
+## CAD (Physical Enclosure)
+
+The `cad/` directory contains 3D-printable parts for a chess clock stand designed to hold a smartphone running TempoMate. Three parts: **Basis** (base with pivot and stops), **Wippe** (rocker/seesaw with phone slot), and **Lehne** (backrest with snap-fit pegs).
+
+- Originally modeled in OpenSCAD (`cad/scad_files/`), ported to CadQuery (`cad/cadquery/`) for parametric Python-based modeling
+- All shared dimensions are defined in `cad/cadquery/config.py` (measurements in mm)
+- STEP files in `cad/step/` are generated — regenerate with `./cad/cadquery2step.sh` (requires a CadQuery conda environment)
+- Run tests: `cd cad/cadquery && python -m pytest`
 
 ## Browser Support
 
