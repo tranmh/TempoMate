@@ -21,7 +21,7 @@ import { MotionSensor } from './input/MotionSensor.js';
 import { StorageManager } from './storage/StorageManager.js';
 import { getPreset } from './presets/presets.js';
 import { GameStatus, Player, FlagState, TimingMethodType, CLOCK_FONTS, Limits, ClockFaceStyle } from './utils/constants.js';
-import { WakeLockManager } from './utils/WakeLockManager.js';
+
 
 export class App {
   constructor() {
@@ -46,8 +46,6 @@ export class App {
 
     // State flags
     this._showingMoves = false;
-    this._wakeLockManager = new WakeLockManager();
-
     this._resetPending = false;
     this._resetConfirmTimer = null;
 
@@ -107,6 +105,14 @@ export class App {
     // Load last option or default to option 1
     const lastOption = StorageManager.loadLastOption();
     this._loadOption(lastOption);
+
+    // Re-acquire wake lock when returning to foreground
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') this._requestWakeLock();
+    });
+
+    // Register service worker for PWA support
+    this._registerServiceWorker();
 
     // Initial render
     this._updateDisplay();
@@ -213,7 +219,7 @@ export class App {
 
     // Wake lock must be requested before AudioContext init — Safari's
     // transient user-activation is consumed by the first privileged API call.
-    this._ensureWakeLock();
+    this._requestWakeLock();
     this.soundManager.init();
 
     if (gs.status === GameStatus.IDLE) {
@@ -250,7 +256,7 @@ export class App {
   _handleSwitchTurn() {
     const gs = this.gameState;
 
-    this._ensureWakeLock();
+    this._requestWakeLock();
     this.soundManager.init();
 
     if (gs.status === GameStatus.IDLE) {
@@ -703,12 +709,19 @@ export class App {
   }
 
   /**
-   * Enable wake lock on first user gesture.
-   * WakeLockManager.enable() is synchronous and fires all three strategies
-   * (native + video + audio) in the same call stack, preserving the gesture.
+   * Register the service worker for offline/PWA support.
    */
-  _ensureWakeLock() {
-    this._wakeLockManager.enable();
+  _registerServiceWorker() {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    }
+  }
+
+  /**
+   * Request wake lock to keep the screen on during a game.
+   */
+  _requestWakeLock() {
+    navigator.wakeLock?.request('screen').catch(() => {});
   }
 
   /**
@@ -724,7 +737,6 @@ export class App {
       this.motionSensor.destroy();
       this.motionSensor = null;
     }
-    this._wakeLockManager.destroy();
   }
 }
 

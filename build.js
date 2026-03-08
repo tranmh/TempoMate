@@ -7,7 +7,7 @@
  * Usage: node build.js
  */
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, copyFileSync, mkdirSync, existsSync } from 'fs';
 import { resolve, dirname, join, relative } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -155,6 +155,10 @@ function build() {
   // Write output
   const outputPath = join(DIST_DIR, 'index.html');
   writeFileSync(outputPath, html, 'utf-8');
+
+  // Copy PWA assets
+  copyFileSync(join(SRC_DIR, 'manifest.json'), join(DIST_DIR, 'manifest.json'));
+  copyFileSync(join(SRC_DIR, 'sw.js'), join(DIST_DIR, 'sw.js'));
 
   const sizeKB = (Buffer.byteLength(html, 'utf-8') / 1024).toFixed(1);
   console.log(`Build complete: dist/index.html (${sizeKB} KB)`);
