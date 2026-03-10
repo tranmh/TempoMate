@@ -359,7 +359,7 @@ describe('MotionSensor', () => {
     });
   });
 
-  describe('screen orientation axis rotation (legacy)', () => {
+  describe('always uses physical gamma axis (legacy)', () => {
     let restoreScreen;
 
     afterEach(() => {
@@ -374,96 +374,57 @@ describe('MotionSensor', () => {
       sensor = new MotionSensor({ onTilt: tiltCallback, threshold: 10 });
       sensor.enable();
 
-      // gamma -15 → left tilt (cos(0)=1, sin(0)=0 → tilt=gamma)
       fireOrientation(-15, 0);
       expect(tiltCallback).toHaveBeenCalledWith('left');
     });
 
-    it('landscape 90° CCW: beta=left/right tilt', () => {
+    it('landscape 90°: still uses gamma, ignores beta', () => {
       restoreScreen = mockScreenAngle(90);
       sensor = new MotionSensor({ onTilt: tiltCallback, threshold: 10 });
       sensor.enable();
 
-      // At 90°: cos(90°)=0, sin(90°)=1 → tilt=beta
-      // beta -15 → left tilt
-      fireOrientation(0, -15);
+      // gamma -15 → left tilt (regardless of screen angle)
+      fireOrientation(-15, 0);
       expect(tiltCallback).toHaveBeenCalledWith('left');
     });
 
-    it('landscape 90° CCW: right tilt via beta', () => {
+    it('landscape 90°: beta alone does not trigger', () => {
       restoreScreen = mockScreenAngle(90);
       sensor = new MotionSensor({ onTilt: tiltCallback, threshold: 10 });
       sensor.enable();
 
-      fireOrientation(0, 15);
-      expect(tiltCallback).toHaveBeenCalledWith('right');
+      // Only beta, no gamma → no trigger
+      fireOrientation(0, -30);
+      expect(tiltCallback).not.toHaveBeenCalled();
     });
 
-    it('landscape 270° CW: beta inverted for left/right', () => {
+    it('landscape 270°: gamma still works normally', () => {
       restoreScreen = mockScreenAngle(270);
       sensor = new MotionSensor({ onTilt: tiltCallback, threshold: 10 });
       sensor.enable();
 
-      // At 270°: cos(270°)=0, sin(270°)=-1 → tilt=-beta
-      // beta +15 → tilt=-15 → left
-      fireOrientation(0, 15);
-      expect(tiltCallback).toHaveBeenCalledWith('left');
+      fireOrientation(15, 0);
+      expect(tiltCallback).toHaveBeenCalledWith('right');
     });
 
-    it('landscape 90°: gamma ignored, only beta matters', () => {
-      restoreScreen = mockScreenAngle(90);
-      sensor = new MotionSensor({ onTilt: tiltCallback, threshold: 10 });
-      sensor.enable();
-
-      // Large gamma but beta=0 → tilt ≈ 0
-      fireOrientation(-30, 0);
-      expect(tiltCallback).not.toHaveBeenCalled();
-    });
-
-    it('portrait 180° (upside-down): gamma inverted', () => {
+    it('portrait 180° (upside-down): gamma not inverted', () => {
       restoreScreen = mockScreenAngle(180);
       sensor = new MotionSensor({ onTilt: tiltCallback, threshold: 10 });
       sensor.enable();
 
-      // At 180°: cos(180°)=-1, sin(180°)=0 → tilt=-gamma
-      // gamma +15 → tilt=-15 → left
+      // gamma +15 → right tilt (physical axis unchanged)
       fireOrientation(15, 0);
-      expect(tiltCallback).toHaveBeenCalledWith('left');
-    });
-
-    it('hysteresis works in landscape', () => {
-      restoreScreen = mockScreenAngle(90);
-      sensor = new MotionSensor({ onTilt: tiltCallback, threshold: 10 });
-      sensor.enable();
-
-      fireOrientation(0, -15);
-      expect(tiltCallback).toHaveBeenCalledTimes(1);
-
-      // Still tilted
-      fireOrientation(0, -20);
-      expect(tiltCallback).toHaveBeenCalledTimes(1);
-
-      // Return to center
-      fireOrientation(0, 0);
-
-      // Tilt right
-      fireOrientation(0, 15);
-      expect(tiltCallback).toHaveBeenCalledTimes(2);
-      expect(tiltCallback).toHaveBeenLastCalledWith('right');
+      expect(tiltCallback).toHaveBeenCalledWith('right');
     });
   });
 
-  describe('screen orientation axis rotation (accelerometer)', () => {
+  describe('always uses physical x-axis (accelerometer)', () => {
     let mockAccel;
     let restoreScreen;
 
     beforeEach(() => {
       mockAccel = null;
-      // Mock Accelerometer that rejects 'screen' ref frame to test manual rotation
       window.Accelerometer = function(options) {
-        if (options.referenceFrame === 'screen') {
-          throw new Error('screen referenceFrame not supported');
-        }
         mockAccel = new MockAccelerometer(options);
         return mockAccel;
       };
@@ -486,86 +447,56 @@ describe('MotionSensor', () => {
       expect(tiltCallback).toHaveBeenCalledWith('left');
     });
 
-    it('landscape 90° CCW: uses y-axis', () => {
+    it('landscape 90°: still uses x-axis, ignores y', () => {
       restoreScreen = mockScreenAngle(90);
       sensor = new MotionSensor({ onTilt: tiltCallback, threshold: 10 });
       sensor.enable();
 
-      // At 90°: screenX = x*cos(90°) + y*sin(90°) = y
-      mockAccel.x = 0;
-      mockAccel.y = 2.54;
+      // x-axis always = physical left/right tilt
+      mockAccel.x = 2.54;
+      mockAccel.y = 0;
       mockAccel._fireReading();
       expect(tiltCallback).toHaveBeenCalledWith('left');
     });
 
-    it('landscape 270° CW: uses -y-axis', () => {
+    it('landscape 270°: still uses x-axis', () => {
       restoreScreen = mockScreenAngle(270);
       sensor = new MotionSensor({ onTilt: tiltCallback, threshold: 10 });
       sensor.enable();
 
-      // At 270°: screenX = x*cos(270°) + y*sin(270°) = -y
-      // y=2.54 → screenX=-2.54 → right tilt
-      mockAccel.x = 0;
-      mockAccel.y = 2.54;
+      mockAccel.x = -2.54;
+      mockAccel.y = 0;
       mockAccel._fireReading();
       expect(tiltCallback).toHaveBeenCalledWith('right');
     });
   });
 
-  describe('accelerometer screen referenceFrame', () => {
+  describe('accelerometer uses device referenceFrame', () => {
     let mockAccel;
-    let restoreScreen;
 
     beforeEach(() => {
       mockAccel = null;
-      // Mock Accelerometer that accepts 'screen' ref frame
       window.Accelerometer = function(options) {
         mockAccel = new MockAccelerometer(options);
-        mockAccel.referenceFrame = options.referenceFrame || 'device';
+        mockAccel._options = options;
         return mockAccel;
       };
     });
 
-    afterEach(() => {
-      if (restoreScreen) {
-        restoreScreen();
-        restoreScreen = null;
-      }
-    });
-
-    it('prefers screen referenceFrame', () => {
+    it('uses device referenceFrame (no screen ref)', () => {
       sensor = new MotionSensor({ onTilt: tiltCallback });
       sensor.enable();
-      expect(mockAccel.referenceFrame).toBe('screen');
-      expect(sensor._accelRefFrame).toBe('screen');
+      // Should not request 'screen' referenceFrame
+      expect(mockAccel._options.referenceFrame).toBeUndefined();
     });
 
-    it('with screen frame: x-axis works directly in landscape', () => {
-      restoreScreen = mockScreenAngle(90);
+    it('x-axis works for left/right tilt detection', () => {
       sensor = new MotionSensor({ onTilt: tiltCallback, threshold: 10 });
       sensor.enable();
 
-      // With screen referenceFrame, x already points screen-right
       mockAccel.x = 2.54;
       mockAccel._fireReading();
       expect(tiltCallback).toHaveBeenCalledWith('left');
-    });
-
-    it('falls back to device frame if screen throws', () => {
-      let callCount = 0;
-      window.Accelerometer = function(options) {
-        callCount++;
-        if (options.referenceFrame === 'screen') {
-          throw new Error('not supported');
-        }
-        mockAccel = new MockAccelerometer(options);
-        return mockAccel;
-      };
-
-      sensor = new MotionSensor({ onTilt: tiltCallback });
-      sensor.enable();
-      expect(sensor._accelRefFrame).toBe('device');
-      expect(callCount).toBe(2); // tried screen, then device
     });
   });
 
