@@ -7,7 +7,8 @@
  *
  * Detects the screen orientation angle and rotates sensor axes so that left/right
  * tilt always maps to the screen's left/right, regardless of portrait or landscape.
- * This handles both OS auto-rotation and in-app CSS rotation correctly.
+ * Supports an additional CSS rotation offset for in-app rotation (e.g. 90° table mode)
+ * that the OS screen orientation API doesn't know about.
  *
  * Uses hysteresis to prevent repeated triggers when holding at an angle.
  *
@@ -46,14 +47,16 @@ function _getScreenAngle() {
 
 /**
  * Compute screen-relative left/right tilt from device-relative beta and gamma.
- * Rotates the sensor axes by the screen orientation angle so that the result
- * always represents the screen's left/right tilt direction.
+ * Rotates the sensor axes by the combined screen orientation angle and any
+ * additional CSS rotation offset, so that the result always represents the
+ * screen's visual left/right tilt direction.
  * @param {number} beta - Device beta (front/back tilt in degrees)
  * @param {number} gamma - Device gamma (left/right tilt in degrees)
+ * @param {number} [cssOffset=0] - Additional CSS rotation offset in degrees
  * @returns {number} Screen-relative left/right tilt in degrees
  */
-function _screenRelativeTilt(beta, gamma) {
-  const angle = _getScreenAngle();
+function _screenRelativeTilt(beta, gamma, cssOffset = 0) {
+  const angle = _getScreenAngle() + cssOffset;
   const rad = angle * Math.PI / 180;
   return gamma * Math.cos(rad) + beta * Math.sin(rad);
 }
@@ -73,6 +76,7 @@ export class MotionSensor {
     this._sensorType = null; // 'generic' | 'legacy' | null
     this._accelerometer = null;
     this._accelRefFrame = null; // 'screen' | 'device' | null
+    this._cssRotationOffset = 0; // Additional CSS rotation in degrees
 
     this._onDeviceOrientation = this._onDeviceOrientation.bind(this);
     this._onAccelReading = this._onAccelReading.bind(this);
@@ -185,6 +189,16 @@ export class MotionSensor {
   }
 
   /**
+   * Set an additional CSS rotation offset (e.g. 90 when app is CSS-rotated).
+   * This is added to the OS screen orientation angle for axis rotation.
+   * @param {number} degrees
+   */
+  setCssRotationOffset(degrees) {
+    this._cssRotationOffset = degrees;
+    this._triggered = null;
+  }
+
+  /**
    * Check if currently enabled.
    * @returns {boolean}
    */
@@ -233,7 +247,7 @@ export class MotionSensor {
    * @param {DeviceOrientationEvent} event
    */
   _onDeviceOrientation(event) {
-    this._processTilt(_screenRelativeTilt(event.beta || 0, event.gamma || 0));
+    this._processTilt(_screenRelativeTilt(event.beta || 0, event.gamma || 0, this._cssRotationOffset));
   }
 
   /**
@@ -243,11 +257,12 @@ export class MotionSensor {
    */
   _onAccelReading() {
     if (!this._accelerometer) return;
-    if (this._accelRefFrame === 'screen') {
+    if (this._accelRefFrame === 'screen' && this._cssRotationOffset === 0) {
+      // Screen reference frame already handles OS rotation; no CSS offset needed
       this._processTilt(_accelToDegrees(this._accelerometer.x));
     } else {
-      // Manual rotation: same formula as deviceorientation
-      const angle = _getScreenAngle();
+      // Manual rotation: combine OS screen angle + CSS rotation offset
+      const angle = _getScreenAngle() + this._cssRotationOffset;
       const rad = angle * Math.PI / 180;
       const x = this._accelerometer.x;
       const y = this._accelerometer.y;
