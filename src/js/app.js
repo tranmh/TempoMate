@@ -130,7 +130,17 @@ export class App {
       onTilt: (side) => this._handleClockTap(side),
       threshold,
     });
+    this._syncMotionSensorRotation();
     this.motionSensor.enable();
+  }
+
+  /**
+   * Sync the motion sensor's CSS rotation offset with the rotation manager.
+   */
+  _syncMotionSensorRotation() {
+    if (this.motionSensor && this.rotationManager) {
+      this.motionSensor.setCssRotationOffset(this.rotationManager.isRotated() ? 90 : 0);
+    }
   }
 
   /**
@@ -147,6 +157,7 @@ export class App {
           threshold,
         });
       }
+      this._syncMotionSensorRotation();
       this.motionSensor.enable();
     } else if (this.motionSensor) {
       this.motionSensor.disable();
@@ -642,6 +653,7 @@ export class App {
     if (btn) {
       btn.title = rotated ? 'Undo rotation' : 'Rotate 90\u00B0';
     }
+    this._syncMotionSensorRotation();
     this.clockDisplay.clearFontSizeCache();
     requestAnimationFrame(() => {
       this.clockDisplay._syncFontSizes();

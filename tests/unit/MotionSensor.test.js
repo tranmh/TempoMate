@@ -819,6 +819,90 @@ describe('MotionSensor', () => {
     });
   });
 
+  describe('CSS rotation offset', () => {
+    it('setCssRotationOffset() rotates tilt axis (legacy)', () => {
+      sensor = new MotionSensor({ onTilt: tiltCallback, threshold: 10 });
+      sensor.setCssRotationOffset(90);
+      sensor.enable();
+
+      // With 90° CSS offset in portrait (screen angle 0):
+      // tilt = gamma*cos(90°) + beta*sin(90°) = beta
+      // So beta -15 → left tilt
+      fireOrientation(0, -15);
+      expect(tiltCallback).toHaveBeenCalledWith('left');
+    });
+
+    it('setCssRotationOffset(90) makes gamma ignored (legacy)', () => {
+      sensor = new MotionSensor({ onTilt: tiltCallback, threshold: 10 });
+      sensor.setCssRotationOffset(90);
+      sensor.enable();
+
+      // Pure gamma should have no effect at 90° offset
+      fireOrientation(-30, 0);
+      expect(tiltCallback).not.toHaveBeenCalled();
+    });
+
+    it('setCssRotationOffset(0) restores default axis (legacy)', () => {
+      sensor = new MotionSensor({ onTilt: tiltCallback, threshold: 10 });
+      sensor.setCssRotationOffset(90);
+      sensor.enable();
+
+      // Beta triggers with 90° offset
+      fireOrientation(0, -15);
+      expect(tiltCallback).toHaveBeenCalledTimes(1);
+
+      // Return to center
+      fireOrientation(0, 0);
+
+      // Reset offset
+      sensor.setCssRotationOffset(0);
+
+      // Now gamma should trigger again
+      fireOrientation(-15, 0);
+      expect(tiltCallback).toHaveBeenCalledTimes(2);
+    });
+
+    it('setCssRotationOffset() rotates accelerometer axis (device frame)', () => {
+      let mockAccel;
+      window.Accelerometer = function(options) {
+        if (options.referenceFrame === 'screen') {
+          throw new Error('screen referenceFrame not supported');
+        }
+        mockAccel = new MockAccelerometer(options);
+        return mockAccel;
+      };
+
+      sensor = new MotionSensor({ onTilt: tiltCallback, threshold: 10 });
+      sensor.setCssRotationOffset(90);
+      sensor.enable();
+
+      // At 90° offset: screenX = x*cos(90°) + y*sin(90°) = y
+      mockAccel.x = 0;
+      mockAccel.y = 2.54;
+      mockAccel._fireReading();
+      expect(tiltCallback).toHaveBeenCalledWith('left');
+    });
+
+    it('setCssRotationOffset() forces manual rotation for screen-frame accelerometer', () => {
+      let mockAccel;
+      window.Accelerometer = function(options) {
+        mockAccel = new MockAccelerometer(options);
+        return mockAccel;
+      };
+
+      sensor = new MotionSensor({ onTilt: tiltCallback, threshold: 10 });
+      sensor.enable();
+      expect(sensor._accelRefFrame).toBe('screen');
+
+      // With CSS offset, screen ref frame alone is insufficient
+      sensor.setCssRotationOffset(90);
+      mockAccel.x = 0;
+      mockAccel.y = 2.54;
+      mockAccel._fireReading();
+      expect(tiltCallback).toHaveBeenCalledWith('left');
+    });
+  });
+
   describe('defensive null guards', () => {
     let mockAccel;
 
