@@ -5,9 +5,9 @@
  * and configurable sampling frequency. Falls back to the legacy deviceorientation API
  * for browsers that don't support Generic Sensor (Safari, Firefox).
  *
- * Listens to the device's tilt axis (gamma in portrait, beta in landscape)
- * and fires a callback when the tilt exceeds a configurable threshold.
- * Uses hysteresis to prevent repeated triggers when holding at an angle.
+ * Listens to the device's gamma axis (left/right tilt) and fires a callback
+ * when the tilt exceeds a configurable threshold. Uses hysteresis to prevent
+ * repeated triggers when holding at an angle.
  *
  * State machine: idle → triggered → (return to center) → idle
  */
@@ -26,17 +26,6 @@ function _accelToDegrees(value, invert = true) {
   return invert ? -degrees : degrees;
 }
 
-/**
- * Detect if the screen is in landscape orientation.
- * @returns {'landscape-primary'|'landscape-secondary'|null}
- */
-function _getLandscapeType() {
-  if (typeof screen !== 'undefined' && screen.orientation) {
-    const type = screen.orientation.type;
-    if (type === 'landscape-primary' || type === 'landscape-secondary') return type;
-  }
-  return null;
-}
 
 export class MotionSensor {
   /**
@@ -207,36 +196,20 @@ export class MotionSensor {
 
   /**
    * Handle deviceorientation events.
-   * Uses gamma in portrait, beta in landscape (rocking axis changes).
+   * Gamma is the left/right tilt axis in both portrait and landscape.
    * @param {DeviceOrientationEvent} event
    */
   _onDeviceOrientation(event) {
-    const landscape = _getLandscapeType();
-    if (landscape) {
-      // In landscape, the rocking motion maps to beta.
-      // landscape-secondary (rotated 180°) inverts the direction.
-      const sign = landscape === 'landscape-secondary' ? -1 : 1;
-      this._processTilt(sign * event.beta);
-    } else {
-      this._processTilt(event.gamma);
-    }
+    this._processTilt(event.gamma);
   }
 
   /**
    * Handle accelerometer reading events.
-   * Uses x-axis in portrait (→ gamma), y-axis in landscape (→ beta).
+   * The x-axis maps to gamma (left/right tilt) in all orientations.
    */
   _onAccelReading() {
     if (!this._accelerometer) return;
-    const landscape = _getLandscapeType();
-    if (landscape) {
-      // In landscape, rocking maps to the y-axis.
-      // landscape-secondary inverts direction.
-      const invert = landscape === 'landscape-primary';
-      this._processTilt(_accelToDegrees(this._accelerometer.y, invert));
-    } else {
-      this._processTilt(_accelToDegrees(this._accelerometer.x, true));
-    }
+    this._processTilt(_accelToDegrees(this._accelerometer.x, true));
   }
 
   /**
