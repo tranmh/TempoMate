@@ -5,9 +5,11 @@
  * and configurable sampling frequency. Falls back to the legacy deviceorientation API
  * for browsers that don't support Generic Sensor (Safari, Firefox).
  *
- * Listens to the device's gamma axis (left/right tilt) and fires a callback
- * when the tilt exceeds a configurable threshold. Uses hysteresis to prevent
- * repeated triggers when holding at an angle.
+ * Detects the screen orientation angle and rotates sensor axes so that left/right
+ * tilt always maps to the screen's left/right, regardless of portrait or landscape.
+ * This handles both OS auto-rotation and in-app CSS rotation correctly.
+ *
+ * Uses hysteresis to prevent repeated triggers when holding at an angle.
  *
  * State machine: idle → triggered → (return to center) → idle
  */
@@ -17,13 +19,43 @@ import { MotionConfig } from '../utils/constants.js';
 /**
  * Convert accelerometer axis value to tilt degrees.
  * @param {number} value - Accelerometer axis reading (m/s²)
- * @param {boolean} invert - Whether to invert the sign
  * @returns {number} Equivalent tilt angle in degrees
  */
-function _accelToDegrees(value, invert = true) {
+function _accelToDegrees(value) {
   const clamped = Math.max(-9.81, Math.min(value, 9.81));
-  const degrees = Math.asin(clamped / 9.81) * (180 / Math.PI);
-  return invert ? -degrees : degrees;
+  return -Math.asin(clamped / 9.81) * (180 / Math.PI);
+}
+
+/**
+ * Get the current screen orientation angle in degrees.
+ * Uses screen.orientation.angle (modern) with window.orientation (legacy) fallback.
+ * Returns 0 for portrait, 90/270 for landscape.
+ * @returns {number}
+ */
+function _getScreenAngle() {
+  if (typeof screen !== 'undefined' && screen.orientation &&
+      typeof screen.orientation.angle === 'number') {
+    return screen.orientation.angle;
+  }
+  // Legacy fallback (iOS < 16.4, older browsers)
+  if (typeof window !== 'undefined' && typeof window.orientation === 'number') {
+    return window.orientation;
+  }
+  return 0;
+}
+
+/**
+ * Compute screen-relative left/right tilt from device-relative beta and gamma.
+ * Rotates the sensor axes by the screen orientation angle so that the result
+ * always represents the screen's left/right tilt direction.
+ * @param {number} beta - Device beta (front/back tilt in degrees)
+ * @param {number} gamma - Device gamma (left/right tilt in degrees)
+ * @returns {number} Screen-relative left/right tilt in degrees
+ */
+function _screenRelativeTilt(beta, gamma) {
+  const angle = _getScreenAngle();
+  const rad = angle * Math.PI / 180;
+  return gamma * Math.cos(rad) + beta * Math.sin(rad);
 }
 
 
@@ -40,6 +72,7 @@ export class MotionSensor {
     this._triggered = null; // null | 'left' | 'right'
     this._sensorType = null; // 'generic' | 'legacy' | null
     this._accelerometer = null;
+    this._accelRefFrame = null; // 'screen' | 'device' | null
 
     this._onDeviceOrientation = this._onDeviceOrientation.bind(this);
     this._onAccelReading = this._onAccelReading.bind(this);
@@ -168,9 +201,8 @@ export class MotionSensor {
   }
 
   /**
-   * Process a tilt value from either backend.
-   * Uses gamma in portrait, beta in landscape — caller selects the correct axis.
-   * @param {number} tilt - Tilt angle in degrees (negative = left, positive = right)
+   * Process a screen-relative tilt value from either backend.
+   * @param {number} tilt - Screen-relative left/right tilt in degrees
    */
   _processTilt(tilt) {
     if (tilt === null || tilt === undefined) return;
@@ -196,20 +228,32 @@ export class MotionSensor {
 
   /**
    * Handle deviceorientation events.
-   * Gamma is the left/right tilt axis in both portrait and landscape.
+   * Rotates beta/gamma by the screen angle so that left/right tilt is always
+   * relative to the screen, not the device's natural portrait orientation.
    * @param {DeviceOrientationEvent} event
    */
   _onDeviceOrientation(event) {
-    this._processTilt(event.gamma);
+    this._processTilt(_screenRelativeTilt(event.beta || 0, event.gamma || 0));
   }
 
   /**
    * Handle accelerometer reading events.
-   * The x-axis maps to gamma (left/right tilt) in all orientations.
+   * With referenceFrame 'screen', x-axis always points screen-right.
+   * Falls back to manual rotation if 'screen' frame is not supported.
    */
   _onAccelReading() {
     if (!this._accelerometer) return;
-    this._processTilt(_accelToDegrees(this._accelerometer.x, true));
+    if (this._accelRefFrame === 'screen') {
+      this._processTilt(_accelToDegrees(this._accelerometer.x));
+    } else {
+      // Manual rotation: same formula as deviceorientation
+      const angle = _getScreenAngle();
+      const rad = angle * Math.PI / 180;
+      const x = this._accelerometer.x;
+      const y = this._accelerometer.y;
+      const screenX = x * Math.cos(rad) + y * Math.sin(rad);
+      this._processTilt(_accelToDegrees(screenX));
+    }
   }
 
   /**
@@ -223,28 +267,39 @@ export class MotionSensor {
 
   /**
    * Try to start the Generic Sensor API (Accelerometer).
+   * Prefers referenceFrame 'screen' (axes auto-adjust to screen orientation),
+   * falls back to 'device' with manual rotation in _onAccelReading.
    * @returns {boolean} true if successfully started
    */
   _tryGenericSensor() {
     if (typeof window === 'undefined' || !('Accelerometer' in window)) return false;
-    try {
-      const accel = new Accelerometer({ frequency: MotionConfig.SENSOR_FREQUENCY });
-      accel.addEventListener('reading', this._onAccelReading);
-      accel.addEventListener('error', this._onAccelError);
+
+    // Try 'screen' reference frame first, then fall back to default ('device')
+    for (const refFrame of ['screen', 'device']) {
       try {
-        accel.start();
-      } catch (startErr) {
-        accel.removeEventListener('reading', this._onAccelReading);
-        accel.removeEventListener('error', this._onAccelError);
-        throw startErr;
+        const options = { frequency: MotionConfig.SENSOR_FREQUENCY };
+        if (refFrame === 'screen') options.referenceFrame = 'screen';
+        const accel = new Accelerometer(options);
+        accel.addEventListener('reading', this._onAccelReading);
+        accel.addEventListener('error', this._onAccelError);
+        try {
+          accel.start();
+        } catch (startErr) {
+          accel.removeEventListener('reading', this._onAccelReading);
+          accel.removeEventListener('error', this._onAccelError);
+          throw startErr;
+        }
+        this._accelerometer = accel;
+        this._accelRefFrame = refFrame;
+        this._sensorType = 'generic';
+        return true;
+      } catch (e) {
+        // 'screen' not supported, try 'device'
+        continue;
       }
-      this._accelerometer = accel;
-      this._sensorType = 'generic';
-      return true;
-    } catch (e) {
-      this._accelerometer = null;
-      return false;
     }
+    this._accelerometer = null;
+    return false;
   }
 
   /**
