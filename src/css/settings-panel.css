@@ -73,6 +73,18 @@
   font-size: 0.85rem;
 }
 
+/* ===== Motion Sensor Group ===== */
+.settings-motion-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+  padding: 8px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+}
+
 /* ===== Tabs ===== */
 .settings-tabs {
   display: flex;
