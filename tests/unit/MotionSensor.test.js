@@ -4,11 +4,11 @@ import { MotionConfig } from '../../src/js/utils/constants.js';
 
 /**
  * Helper: dispatch a mock deviceorientation event.
- * @param {number} gamma - Tilt angle in degrees
+ * @param {number} beta - Tilt angle in degrees
  */
-function fireOrientation(gamma) {
+function fireOrientation(beta) {
   const event = new Event('deviceorientation');
-  event.gamma = gamma;
+  event.beta = beta;
   window.dispatchEvent(event);
 }
 
@@ -25,7 +25,7 @@ describe('MotionSensor', () => {
       window.DeviceOrientationEvent = class DeviceOrientationEvent extends Event {
         constructor(type, init = {}) {
           super(type, init);
-          this.gamma = init.gamma ?? null;
+          this.beta = init.beta ?? null;
         }
       };
     }
@@ -96,7 +96,7 @@ describe('MotionSensor', () => {
   });
 
   describe('tilt detection', () => {
-    it('fires left on negative gamma past threshold', () => {
+    it('fires left on negative beta past threshold', () => {
       sensor = new MotionSensor({ onTilt: tiltCallback, threshold: 10 });
       sensor.enable();
 
@@ -104,7 +104,7 @@ describe('MotionSensor', () => {
       expect(tiltCallback).toHaveBeenCalledWith('left');
     });
 
-    it('fires right on positive gamma past threshold', () => {
+    it('fires right on positive beta past threshold', () => {
       sensor = new MotionSensor({ onTilt: tiltCallback, threshold: 10 });
       sensor.enable();
 
@@ -122,12 +122,12 @@ describe('MotionSensor', () => {
       expect(tiltCallback).not.toHaveBeenCalled();
     });
 
-    it('ignores null gamma', () => {
+    it('ignores null beta', () => {
       sensor = new MotionSensor({ onTilt: tiltCallback });
       sensor.enable();
 
       const event = new Event('deviceorientation');
-      event.gamma = null;
+      event.beta = null;
       window.dispatchEvent(event);
 
       expect(tiltCallback).not.toHaveBeenCalled();

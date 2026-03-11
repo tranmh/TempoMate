@@ -8,7 +8,12 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>TempoMate - Chess Clock</title>
-            <style>
+  
+  
+  
+  
+  
+  <style>
 /* --- css/themes.css --- */
 /* ============================================
    TempoMate Theme System
@@ -1858,8 +1863,9 @@ body {
   <!-- Correction Mode Overlay -->
   <div id="correction-overlay" class="hidden"></div>
 
-    <script>
-// --- js/utils/constants.js ---
+  
+  <script>
+// --- js\utils\constants.js ---
 /**
  * Application-wide constants for TempoMate
  */
@@ -1998,13 +2004,14 @@ const StorageKeys = Object.freeze({
   MOTION_THRESHOLD: 'tempomate_motion_threshold',
 });
 
-// --- js/state/PlayerState.js ---
+// --- js\state\PlayerState.js ---
 /**
  * PlayerState - Per-player state for the clock
  *
  * Tracks remaining time, current period, move count, flag status,
  * and timing method state for a single player.
  */
+
 
 
 class PlayerState {
@@ -2140,13 +2147,15 @@ class PlayerState {
   }
 }
 
-// --- js/state/GameState.js ---
+// --- js\state\GameState.js ---
 /**
  * GameState - Central game state management
  *
  * Manages the overall clock state, active player, timing configuration,
  * and coordinates between the timer engine and player states.
  */
+
+
 
 
 class GameState {
@@ -2443,7 +2452,7 @@ class GameState {
   }
 }
 
-// --- js/engine/TimerEngine.js ---
+// --- js\engine\TimerEngine.js ---
 /**
  * TimerEngine - High-precision timer using requestAnimationFrame + performance.now()
  *
@@ -2580,7 +2589,7 @@ class TimerEngine {
   }
 }
 
-// --- js/engine/TimingMethod.js ---
+// --- js\engine\TimingMethod.js ---
 /**
  * TimingMethod - Base class / interface for all timing methods.
  *
@@ -2655,13 +2664,15 @@ class TimingMethod {
   }
 }
 
-// --- js/engine/methods/TimeMethod.js ---
+// --- js\engine\methods\TimeMethod.js ---
 /**
  * TimeMethod - Guillotine / Sudden Death timing
  *
  * Simple countdown to zero. No bonus or delay per move.
  * When a player reaches 0:00, a flag appears.
  */
+
+
 
 
 class TimeMethod extends TimingMethod {
@@ -2697,7 +2708,7 @@ class TimeMethod extends TimingMethod {
   }
 }
 
-// --- js/engine/methods/FischerMethod.js ---
+// --- js\engine\methods\FischerMethod.js ---
 /**
  * FischerMethod - Fischer Bonus timing
  *
@@ -2706,6 +2717,8 @@ class TimeMethod extends TimingMethod {
  * FIDE rules: clock freezes when reaching 0:00 in final period.
  * FREEZE is ON by default.
  */
+
+
 
 
 class FischerMethod extends TimingMethod {
@@ -2771,7 +2784,7 @@ class FischerMethod extends TimingMethod {
   }
 }
 
-// --- js/engine/methods/BronsteinDelayMethod.js ---
+// --- js\engine\methods\BronsteinDelayMethod.js ---
 /**
  * BronsteinDelayMethod - Bronstein Delay timing
  *
@@ -2781,6 +2794,8 @@ class FischerMethod extends TimingMethod {
  * Total time can NEVER exceed the amount at start of the move (no accumulation).
  * FREEZE is ON by default.
  */
+
+
 
 
 class BronsteinDelayMethod extends TimingMethod {
@@ -2838,7 +2853,7 @@ class BronsteinDelayMethod extends TimingMethod {
   }
 }
 
-// --- js/engine/methods/UsDelayMethod.js ---
+// --- js\engine\methods\UsDelayMethod.js ---
 /**
  * UsDelayMethod - US Delay timing
  *
@@ -2848,6 +2863,8 @@ class BronsteinDelayMethod extends TimingMethod {
  * Functionally identical outcome to Bronstein, but displayed differently.
  * FREEZE is OFF by default.
  */
+
+
 
 
 class UsDelayMethod extends TimingMethod {
@@ -2915,7 +2932,7 @@ class UsDelayMethod extends TimingMethod {
   }
 }
 
-// --- js/engine/methods/ByoYomiMethod.js ---
+// --- js\engine\methods\ByoYomiMethod.js ---
 /**
  * ByoYomiMethod - Japanese Byo-yomi timing
  *
@@ -2927,6 +2944,8 @@ class UsDelayMethod extends TimingMethod {
  * Display shows TOTAL remaining time (moments * timePerMoment).
  * Sound ON by default.
  */
+
+
 
 
 class ByoYomiMethod extends TimingMethod {
@@ -3034,7 +3053,7 @@ class ByoYomiMethod extends TimingMethod {
   }
 }
 
-// --- js/engine/methods/CanadianByoYomiMethod.js ---
+// --- js\engine\methods\CanadianByoYomiMethod.js ---
 /**
  * CanadianByoYomiMethod - Canadian Byo-yomi timing
  *
@@ -3044,6 +3063,8 @@ class ByoYomiMethod extends TimingMethod {
  * Max byo-yomi time: 9:59.
  * Sound ON by default.
  */
+
+
 
 
 class CanadianByoYomiMethod extends TimingMethod {
@@ -3114,7 +3135,7 @@ class CanadianByoYomiMethod extends TimingMethod {
   }
 }
 
-// --- js/engine/methods/UpcountMethod.js ---
+// --- js\engine\methods\UpcountMethod.js ---
 /**
  * UpcountMethod - Upcount timing (used in Scrabble)
  *
@@ -3122,6 +3143,8 @@ class CanadianByoYomiMethod extends TimingMethod {
  * Used to track overtime for penalty point calculation.
  * No configurable settings. Can only be set as the last period.
  */
+
+
 
 
 class UpcountMethod extends TimingMethod {
@@ -3159,7 +3182,7 @@ class UpcountMethod extends TimingMethod {
   }
 }
 
-// --- js/engine/PeriodManager.js ---
+// --- js\engine\PeriodManager.js ---
 /**
  * PeriodManager - Manages multi-period transitions
  *
@@ -3170,6 +3193,14 @@ class UpcountMethod extends TimingMethod {
  * - Bonus/delay difference calculations on transition
  * - Flag display logic
  */
+
+
+
+
+
+
+
+
 
 
 class PeriodManager {
@@ -3430,7 +3461,7 @@ class PeriodManager {
   }
 }
 
-// --- js/engine/MoveCounter.js ---
+// --- js\engine\MoveCounter.js ---
 /**
  * MoveCounter - Tracks move counts per player
  *
@@ -3501,7 +3532,7 @@ class MoveCounter {
   }
 }
 
-// --- js/ui/renderers/ClockRenderer.js ---
+// --- js\ui\renderers\ClockRenderer.js ---
 /**
  * ClockRenderer - Base class / interface for clock face renderers.
  *
@@ -3555,7 +3586,7 @@ class ClockRenderer {
   }
 }
 
-// --- js/utils/TimeFormatter.js ---
+// --- js\utils\TimeFormatter.js ---
 /**
  * TimeFormatter - Converts milliseconds to display strings
  */
@@ -3657,13 +3688,16 @@ function formatTimeShort(ms) {
   return parts.join(' ');
 }
 
-// --- js/ui/renderers/DigitalClockRenderer.js ---
+// --- js\ui\renderers\DigitalClockRenderer.js ---
 /**
  * DigitalClockRenderer - Renders the classic LCD digital clock face.
  *
  * Extracted from ClockDisplay. Creates the per-side DOM structure:
  * header (flag + LED + color), time wrapper (ghost + time), footer (moves + byo).
  */
+
+
+
 
 
 class DigitalClockRenderer extends ClockRenderer {
@@ -3915,7 +3949,7 @@ class DigitalClockRenderer extends ClockRenderer {
   }
 }
 
-// --- js/ui/renderers/GardeClockRenderer.js ---
+// --- js\ui\renderers\GardeClockRenderer.js ---
 /**
  * GardeClockRenderer - Garde-style analog clock face (SVG).
  *
@@ -3923,6 +3957,8 @@ class DigitalClockRenderer extends ClockRenderer {
  * elegant Arabic numerals, thin serif hands, brass center pin, red flag
  * mechanism at 12 o'clock.
  */
+
+
 
 
 class GardeClockRenderer extends ClockRenderer {
@@ -4277,7 +4313,7 @@ class GardeClockRenderer extends ClockRenderer {
   }
 }
 
-// --- js/ui/renderers/InsaClockRenderer.js ---
+// --- js\ui\renderers\InsaClockRenderer.js ---
 /**
  * InsaClockRenderer - Insa-style analog clock face (SVG).
  *
@@ -4285,6 +4321,8 @@ class GardeClockRenderer extends ClockRenderer {
  * numerals, thicker hands, brass trim border, distinctive oscillating bar
  * that swings when the clock is active.
  */
+
+
 
 
 class InsaClockRenderer extends ClockRenderer {
@@ -4635,13 +4673,17 @@ class InsaClockRenderer extends ClockRenderer {
   }
 }
 
-// --- js/ui/ClockDisplay.js ---
+// --- js\ui\ClockDisplay.js ---
 /**
  * ClockDisplay - Renders the clock face for both players
  *
  * Delegates per-side rendering to a ClockRenderer instance (digital, Garde, Insa).
  * Manages container structure, ResizeObserver, and coordinated font sizing.
  */
+
+
+
+
 
 
 class ClockDisplay {
@@ -4977,7 +5019,7 @@ class ClockDisplay {
   }
 }
 
-// --- js/ui/StatusBar.js ---
+// --- js\ui\StatusBar.js ---
 /**
  * StatusBar - Displays timing method, period, icons, option number
  *
@@ -4989,6 +5031,7 @@ class ClockDisplay {
  * - Option number
  * - Play/Pause indicator
  */
+
 
 
 class StatusBar {
@@ -5193,7 +5236,7 @@ class StatusBar {
   }
 }
 
-// --- js/presets/presets.js ---
+// --- js\presets\presets.js ---
 /**
  * Presets - All 24 pre-programmed timing options
  *
@@ -5211,6 +5254,7 @@ class StatusBar {
  * - byoTimeMs: Byo-yomi time per moment in ms
  * - byoMoments: Number of byo-yomi moments
  */
+
 
 
 // Helper to convert minutes to ms
@@ -5517,7 +5561,7 @@ function getAllPresets() {
   return presets;
 }
 
-// --- js/storage/StorageManager.js ---
+// --- js\storage\StorageManager.js ---
 /**
  * StorageManager - localStorage persistence for custom options and preferences
  *
@@ -5527,6 +5571,7 @@ function getAllPresets() {
  * - Theme preference
  * - Sound enabled state
  */
+
 
 
 class StorageManager {
@@ -5840,16 +5885,18 @@ class StorageManager {
   }
 }
 
-// --- js/input/MotionSensor.js ---
+// --- js\input\MotionSensor.js ---
 /**
  * MotionSensor - Tilt-based turn switching via deviceorientation API
  *
- * Listens to the device's gamma axis (left/right tilt) and fires a callback
- * when the tilt exceeds a configurable threshold. Uses hysteresis to prevent
- * repeated triggers when holding at an angle.
+ * Listens to the device's beta axis (front/back tilt — but when the phone
+ * stands on its side edge, this becomes the left/right tilt) and fires a
+ * callback when the tilt exceeds a configurable threshold. Uses hysteresis
+ * to prevent repeated triggers when holding at an angle.
  *
  * State machine: idle → triggered → (return to center) → idle
  */
+
 
 
 class MotionSensor {
@@ -5925,6 +5972,7 @@ class MotionSensor {
    */
   setThreshold(degrees) {
     this._threshold = Math.max(MotionConfig.MIN_THRESHOLD, Math.min(degrees, MotionConfig.MAX_THRESHOLD));
+    this._triggered = null;
   }
 
   /**
@@ -5948,25 +5996,25 @@ class MotionSensor {
    * @param {DeviceOrientationEvent} event
    */
   _onDeviceOrientation(event) {
-    const gamma = event.gamma; // left/right tilt in degrees (-90 to 90)
-    if (gamma === null || gamma === undefined) return;
+    const beta = event.beta; // front/back tilt — but when phone is on its side, this is the left/right tilt
+    if (beta === null || beta === undefined) return;
 
     const hysteresis = this._threshold * MotionConfig.HYSTERESIS_RATIO;
 
     if (this._triggered === null) {
       // Idle state — check for threshold crossing
-      if (gamma <= -this._threshold) {
+      if (beta <= -this._threshold) {
         this._triggered = 'left';
         this._onTilt('left');
-      } else if (gamma >= this._threshold) {
+      } else if (beta >= this._threshold) {
         this._triggered = 'right';
         this._onTilt('right');
       }
     } else {
       // Triggered state — wait for return to center (within hysteresis band)
-      if (this._triggered === 'left' && gamma > -hysteresis) {
+      if (this._triggered === 'left' && beta > -hysteresis) {
         this._triggered = null;
-      } else if (this._triggered === 'right' && gamma < hysteresis) {
+      } else if (this._triggered === 'right' && beta < hysteresis) {
         this._triggered = null;
       }
     }
@@ -5981,7 +6029,7 @@ class MotionSensor {
   }
 }
 
-// --- js/ui/SettingsPanel.js ---
+// --- js\ui\SettingsPanel.js ---
 /**
  * SettingsPanel - Option selection + manual configuration UI
  *
@@ -5991,6 +6039,11 @@ class MotionSensor {
  * - Per-period configuration with method selection
  * - Asymmetric time support
  */
+
+
+
+
+
 
 
 const METHOD_NAMES = {
@@ -6879,7 +6932,7 @@ class SettingsPanel {
   }
 }
 
-// --- js/ui/CorrectionMode.js ---
+// --- js\ui\CorrectionMode.js ---
 /**
  * CorrectionMode - Time correction / arbiter mode UI
  *
@@ -6891,6 +6944,8 @@ class SettingsPanel {
  *
  * Navigation with arrow keys/buttons, adjustment with +/-.
  */
+
+
 
 
 /**
@@ -7311,7 +7366,7 @@ class CorrectionMode {
   }
 }
 
-// --- js/ui/SoundManager.js ---
+// --- js\ui\SoundManager.js ---
 /**
  * SoundManager - Web Audio API beep generation
  *
@@ -7321,6 +7376,7 @@ class CorrectionMode {
  * - Longer beep at 0:00
  * - Byo-yomi moment end beep
  */
+
 
 
 class SoundManager {
@@ -7484,7 +7540,7 @@ class SoundManager {
   }
 }
 
-// --- js/ui/ThemeManager.js ---
+// --- js\ui\ThemeManager.js ---
 /**
  * ThemeManager - Dark/light theme switching
  *
@@ -7493,6 +7549,7 @@ class SoundManager {
  * - Manual toggle
  * - Persistence in localStorage
  */
+
 
 
 class ThemeManager {
@@ -7577,7 +7634,7 @@ class ThemeManager {
   }
 }
 
-// --- js/ui/RotationManager.js ---
+// --- js\ui\RotationManager.js ---
 /**
  * RotationManager - 90° rotation for mobile flat-on-table use
  *
@@ -7585,6 +7642,7 @@ class ThemeManager {
  * players can read their side when the phone is laid flat.
  * User preference is persisted and always wins over auto-detection.
  */
+
 
 
 class RotationManager {
@@ -7652,7 +7710,7 @@ class RotationManager {
   }
 }
 
-// --- js/input/InputHandler.js ---
+// --- js\input\InputHandler.js ---
 /**
  * InputHandler - Touch, click, and keyboard event handling
  *
@@ -7662,6 +7720,7 @@ class RotationManager {
  * - Long press detection (for sound toggle, freeze toggle, etc.)
  * - Touch events with proper handling to prevent double-fires
  */
+
 
 
 class InputHandler {
@@ -7899,7 +7958,7 @@ class InputHandler {
   }
 }
 
-// --- js/vendor/NoSleep.js ---
+// --- js\vendor\NoSleep.js ---
 /**
  * NoSleep.js v0.12.0
  * https://github.com/richtr/NoSleep.js
@@ -7969,7 +8028,7 @@ class NoSleep {
   }
 }
 
-// --- js/utils/WakeLockManager.js ---
+// --- js\utils\WakeLockManager.js ---
 /**
  * WakeLockManager - Prevents the screen from sleeping.
  *
@@ -7981,6 +8040,7 @@ class NoSleep {
  * All three strategies are initiated synchronously from enable() to
  * preserve the user gesture context (required by Safari/iOS).
  */
+
 
 
 const hasNativeWakeLock = () =>
@@ -8177,13 +8237,30 @@ class WakeLockManager {
   }
 }
 
-// --- js/app.js ---
+// --- js\app.js ---
 /**
  * TempoMate - Main Application
  *
  * Initializes all components, wires up event handling, and manages
  * the main game loop.
  */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 class App {

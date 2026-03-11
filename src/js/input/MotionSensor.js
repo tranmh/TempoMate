@@ -1,9 +1,10 @@
 /**
  * MotionSensor - Tilt-based turn switching via deviceorientation API
  *
- * Listens to the device's gamma axis (left/right tilt) and fires a callback
- * when the tilt exceeds a configurable threshold. Uses hysteresis to prevent
- * repeated triggers when holding at an angle.
+ * Listens to the device's beta axis (front/back tilt — but when the phone
+ * stands on its side edge, this becomes the left/right tilt) and fires a
+ * callback when the tilt exceeds a configurable threshold. Uses hysteresis
+ * to prevent repeated triggers when holding at an angle.
  *
  * State machine: idle → triggered → (return to center) → idle
  */
@@ -107,25 +108,25 @@ export class MotionSensor {
    * @param {DeviceOrientationEvent} event
    */
   _onDeviceOrientation(event) {
-    const gamma = event.gamma; // left/right tilt in degrees (-90 to 90)
-    if (gamma === null || gamma === undefined) return;
+    const beta = event.beta; // front/back tilt — but when phone is on its side, this is the left/right tilt
+    if (beta === null || beta === undefined) return;
 
     const hysteresis = this._threshold * MotionConfig.HYSTERESIS_RATIO;
 
     if (this._triggered === null) {
       // Idle state — check for threshold crossing
-      if (gamma <= -this._threshold) {
+      if (beta <= -this._threshold) {
         this._triggered = 'left';
         this._onTilt('left');
-      } else if (gamma >= this._threshold) {
+      } else if (beta >= this._threshold) {
         this._triggered = 'right';
         this._onTilt('right');
       }
     } else {
       // Triggered state — wait for return to center (within hysteresis band)
-      if (this._triggered === 'left' && gamma > -hysteresis) {
+      if (this._triggered === 'left' && beta > -hysteresis) {
         this._triggered = null;
-      } else if (this._triggered === 'right' && gamma < hysteresis) {
+      } else if (this._triggered === 'right' && beta < hysteresis) {
         this._triggered = null;
       }
     }
