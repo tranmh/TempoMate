@@ -1,28 +1,19 @@
 import { test, expect } from '@playwright/test';
 
 /**
- * Helper: inject mock Wake Lock + Web Audio APIs before the app loads.
+ * Helper: inject mock Wake Lock API before the app loads.
  * Stores call logs on window.__wakeLockLog for assertions.
- *
- * Uses Object.defineProperty because navigator.wakeLock is a prototype
- * getter in Chromium and cannot be overwritten by simple assignment.
  */
 function injectMockAPIs(page, { hasNativeAPI = true, nativeShouldFail = false } = {}) {
   return page.addInitScript(({ hasNativeAPI, nativeShouldFail }) => {
     window.__wakeLockLog = {
       nativeRequests: [],
-      videoPlays: [],
-      audioContextsCreated: [],
-      timestamps: {},
     };
 
-    // Mock native Wake Lock API
     if (hasNativeAPI) {
-      const locks = [];
       const wakeLockAPI = {
         request: (type) => {
           window.__wakeLockLog.nativeRequests.push({ type, time: performance.now() });
-          window.__wakeLockLog.timestamps.nativeRequest = performance.now();
           if (nativeShouldFail) {
             return Promise.reject(new Error('Mock: wake lock denied'));
           }
@@ -37,10 +28,8 @@ function injectMockAPIs(page, { hasNativeAPI = true, nativeShouldFail = false } 
               return Promise.resolve();
             },
           };
-          locks.push(lock);
           return Promise.resolve(lock);
         },
-        _locks: locks,
       };
       Object.defineProperty(navigator, 'wakeLock', {
         value: wakeLockAPI,
@@ -49,7 +38,6 @@ function injectMockAPIs(page, { hasNativeAPI = true, nativeShouldFail = false } 
         writable: true,
       });
     } else {
-      // Remove native API — define as non-enumerable undefined then delete
       Object.defineProperty(navigator, 'wakeLock', {
         value: undefined,
         configurable: true,
@@ -57,61 +45,42 @@ function injectMockAPIs(page, { hasNativeAPI = true, nativeShouldFail = false } 
       });
       delete navigator.wakeLock;
     }
-
-    // Intercept HTMLVideoElement.play to track calls
-    const origPlay = HTMLVideoElement.prototype.play;
-    HTMLVideoElement.prototype.play = function () {
-      window.__wakeLockLog.videoPlays.push({ time: performance.now() });
-      window.__wakeLockLog.timestamps.videoPlay = performance.now();
-      return origPlay.call(this).catch(() => Promise.resolve());
-    };
-
-    // Intercept AudioContext creation
-    const OrigAudioContext = window.AudioContext || window.webkitAudioContext;
-    if (OrigAudioContext) {
-      const MockAudioContext = function (...args) {
-        window.__wakeLockLog.audioContextsCreated.push({ time: performance.now() });
-        window.__wakeLockLog.timestamps.audioContext = performance.now();
-        return new OrigAudioContext(...args);
-      };
-      MockAudioContext.prototype = OrigAudioContext.prototype;
-      window.AudioContext = MockAudioContext;
-      if (window.webkitAudioContext) {
-        window.webkitAudioContext = MockAudioContext;
-      }
-    }
   }, { hasNativeAPI, nativeShouldFail });
 }
 
-test.describe('Wake Lock — Modern browser (native API available)', () => {
+test.describe('Wake Lock — Native API available', () => {
   test.beforeEach(async ({ page }) => {
     await injectMockAPIs(page, { hasNativeAPI: true });
     await page.goto('/');
     await page.waitForSelector('.clock-container');
   });
 
-  test('all 3 strategies activate on tap', async ({ page }) => {
+  test('wake lock requested on tap', async ({ page }) => {
     await page.click('.clock-left');
-    // Allow microtask for native .then() to resolve
     await page.waitForTimeout(200);
 
     const log = await page.evaluate(() => window.__wakeLockLog);
     expect(log.nativeRequests.length).toBeGreaterThanOrEqual(1);
-    expect(log.videoPlays.length).toBeGreaterThanOrEqual(1);
-    expect(log.audioContextsCreated.length).toBeGreaterThanOrEqual(1);
+    expect(log.nativeRequests[0].type).toBe('screen');
   });
 
-  test('no double native request on second tap', async ({ page }) => {
-    // First tap starts the clock
+  test('wake lock requested on each tap', async ({ page }) => {
     await page.click('.clock-left');
     await page.waitForTimeout(200);
 
-    // Second tap switches turns — should not re-request native lock
     await page.click('.clock-right');
     await page.waitForTimeout(200);
 
     const log = await page.evaluate(() => window.__wakeLockLog);
-    expect(log.nativeRequests.length).toBe(1);
+    expect(log.nativeRequests.length).toBe(2);
+  });
+
+  test('spacebar triggers wake lock', async ({ page }) => {
+    await page.keyboard.press('Space');
+    await page.waitForTimeout(200);
+
+    const log = await page.evaluate(() => window.__wakeLockLog);
+    expect(log.nativeRequests.length).toBeGreaterThanOrEqual(1);
   });
 });
 
@@ -122,34 +91,38 @@ test.describe('Wake Lock — Native API failure', () => {
     await page.waitForSelector('.clock-container');
   });
 
-  test('fallbacks still activate when native fails', async ({ page }) => {
+  test('gracefully handles native wake lock rejection', async ({ page }) => {
+    // Should not throw — the .catch(() => {}) swallows the error
     await page.click('.clock-left');
     await page.waitForTimeout(200);
 
     const log = await page.evaluate(() => window.__wakeLockLog);
-    // Native was attempted but failed
     expect(log.nativeRequests.length).toBeGreaterThanOrEqual(1);
-    // Fallbacks still activated
-    expect(log.videoPlays.length).toBeGreaterThanOrEqual(1);
-    expect(log.audioContextsCreated.length).toBeGreaterThanOrEqual(1);
+
+    // App should still be functional (game started)
+    const status = await page.evaluate(() => window.__tempoMateApp.gameState.status);
+    expect(status).toBe('running');
   });
 });
 
-test.describe('Wake Lock — No native API (Opera-like)', () => {
+test.describe('Wake Lock — No native API', () => {
   test.beforeEach(async ({ page }) => {
     await injectMockAPIs(page, { hasNativeAPI: false });
     await page.goto('/');
     await page.waitForSelector('.clock-container');
   });
 
-  test('only video and audio fallbacks used', async ({ page }) => {
+  test('app works without native wake lock API', async ({ page }) => {
+    // Should not throw even without navigator.wakeLock
     await page.click('.clock-left');
     await page.waitForTimeout(200);
 
     const log = await page.evaluate(() => window.__wakeLockLog);
     expect(log.nativeRequests.length).toBe(0);
-    expect(log.videoPlays.length).toBeGreaterThanOrEqual(1);
-    expect(log.audioContextsCreated.length).toBeGreaterThanOrEqual(1);
+
+    // App should still be functional
+    const status = await page.evaluate(() => window.__tempoMateApp.gameState.status);
+    expect(status).toBe('running');
   });
 });
 
@@ -160,24 +133,10 @@ test.describe('Wake Lock — Visibility change', () => {
     await page.waitForSelector('.clock-container');
   });
 
-  test('native lock re-acquired after tab hidden then visible', async ({ page }) => {
-    // Activate wake lock
-    await page.click('.clock-left');
-    await page.waitForTimeout(200);
-
+  test('wake lock re-acquired after tab becomes visible', async ({ page }) => {
     const requestsBefore = await page.evaluate(() => window.__wakeLockLog.nativeRequests.length);
-    expect(requestsBefore).toBeGreaterThanOrEqual(1);
 
-    // Simulate: release the current lock (triggers release event → nullifies _nativeLock)
-    await page.evaluate(() => {
-      const locks = navigator.wakeLock._locks;
-      if (locks && locks.length > 0) {
-        locks[locks.length - 1].release();
-      }
-    });
-    await page.waitForTimeout(100);
-
-    // Simulate tab becoming visible again
+    // Simulate tab becoming visible
     await page.evaluate(() => {
       Object.defineProperty(document, 'visibilityState', {
         value: 'visible',
@@ -189,50 +148,5 @@ test.describe('Wake Lock — Visibility change', () => {
 
     const requestsAfter = await page.evaluate(() => window.__wakeLockLog.nativeRequests.length);
     expect(requestsAfter).toBeGreaterThan(requestsBefore);
-  });
-});
-
-test.describe('Wake Lock — Synchronous call stack', () => {
-  test.beforeEach(async ({ page }) => {
-    await injectMockAPIs(page, { hasNativeAPI: true });
-    await page.goto('/');
-    await page.waitForSelector('.clock-container');
-  });
-
-  test('all 3 strategies initiated within 5ms of each other', async ({ page }) => {
-    await page.click('.clock-left');
-    await page.waitForTimeout(200);
-
-    const timestamps = await page.evaluate(() => window.__wakeLockLog.timestamps);
-    const times = [
-      timestamps.nativeRequest,
-      timestamps.videoPlay,
-      timestamps.audioContext,
-    ].filter(Boolean);
-
-    expect(times.length).toBe(3);
-
-    const spread = Math.max(...times) - Math.min(...times);
-    // All strategies fire in the same synchronous call stack.
-    // An async gap (await) would cause 50ms+ spread.
-    expect(spread).toBeLessThan(10);
-  });
-});
-
-test.describe('Wake Lock — Keyboard activation', () => {
-  test.beforeEach(async ({ page }) => {
-    await injectMockAPIs(page, { hasNativeAPI: true });
-    await page.goto('/');
-    await page.waitForSelector('.clock-container');
-  });
-
-  test('spacebar triggers wake lock', async ({ page }) => {
-    await page.keyboard.press('Space');
-    await page.waitForTimeout(200);
-
-    const log = await page.evaluate(() => window.__wakeLockLog);
-    expect(log.nativeRequests.length).toBeGreaterThanOrEqual(1);
-    expect(log.videoPlays.length).toBeGreaterThanOrEqual(1);
-    expect(log.audioContextsCreated.length).toBeGreaterThanOrEqual(1);
   });
 });

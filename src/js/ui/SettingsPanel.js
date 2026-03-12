@@ -197,6 +197,13 @@ export class SettingsPanel {
       motionCheck.checked = StorageManager.loadMotionEnabled();
       motionLabel.appendChild(motionCheck);
       motionLabel.appendChild(document.createTextNode(' Motion sensor (tilt to switch)'));
+      const sensorType = MotionSensor.getSensorType();
+      if (sensorType) {
+        const sensorTypeLabel = document.createElement('span');
+        sensorTypeLabel.style.cssText = 'font-size:0.8em;opacity:0.6;margin-left:6px';
+        sensorTypeLabel.textContent = sensorType === 'generic' ? 'Generic Sensor' : 'Device Orientation';
+        motionLabel.appendChild(sensorTypeLabel);
+      }
       motionGroup.appendChild(motionLabel);
 
       // Threshold input (only visible when enabled)

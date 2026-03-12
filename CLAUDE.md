@@ -56,3 +56,31 @@ Time expires → FROZEN. Long-press pause → CORRECTING. Reset → IDLE.
 - Every class has a `destroy()` method that removes event listeners
 - JSDoc comments on all classes and public methods
 - Build system (`build.js`) resolves ES imports via depth-first traversal and strips import/export statements
+
+## CAD (Physical Enclosure)
+
+`cad/` contains 3D-printable enclosure parts for a chess clock stand (basis, wippe/rocker, lehne/backrest).
+
+### Structure
+
+- `cad/scad_files/` — Original OpenSCAD source files
+- `cad/cadquery/` — CadQuery (Python) port of the same geometry
+- `cad/step/` — Exported STEP files (generated, not hand-edited)
+- `cad/cadquery2step.sh` — Converts CadQuery `.py` → `.step` (requires conda env at `~/work/cadquery/env`)
+
+### CAD Commands
+
+```bash
+# Run CadQuery tests
+cd cad/cadquery && python -m pytest
+
+# Convert all parts to STEP
+./cad/cadquery2step.sh
+```
+
+### CAD Conventions
+
+- Shared dimensions in `cad/cadquery/config.py` (all measurements in mm, German variable names)
+- Parts: `basis.py` (base), `wippe.py` (rocker), `lehne.py` (backrest), `assembly.py` (combined)
+- Each CadQuery part file exports STEP when run directly (`python basis.py`)
+- Tests in `cad/cadquery/tests/` — unit tests per part plus fit/assembly tests

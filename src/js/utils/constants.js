@@ -121,6 +121,7 @@ export const MotionConfig = Object.freeze({
   MIN_THRESHOLD: 5,
   MAX_THRESHOLD: 45,
   HYSTERESIS_RATIO: 0.5,
+  SENSOR_FREQUENCY: 30,
 });
 
 /** localStorage keys */
