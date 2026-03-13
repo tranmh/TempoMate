@@ -34,6 +34,14 @@ export class MotionSensor {
   }
 
   /**
+   * Return the sensor type string if supported, or null if not.
+   * @returns {string|null} 'deviceorientation' or null
+   */
+  static getSensorType() {
+    return MotionSensor.isSupported() ? 'deviceorientation' : null;
+  }
+
+  /**
    * Check if iOS 13+ permission request is needed.
    * @returns {boolean}
    */
