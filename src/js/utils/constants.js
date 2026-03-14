@@ -117,7 +117,7 @@ export const UIConfig = Object.freeze({
 
 /** Motion sensor configuration */
 export const MotionConfig = Object.freeze({
-  DEFAULT_THRESHOLD: 10,
+  DEFAULT_THRESHOLD: 6,
   MIN_THRESHOLD: 5,
   MAX_THRESHOLD: 45,
   HYSTERESIS_RATIO: 0.5,

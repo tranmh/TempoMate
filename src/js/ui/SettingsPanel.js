@@ -188,7 +188,7 @@ export class SettingsPanel {
     // Motion sensor section
     if (MotionSensor.isSupported()) {
       const motionGroup = document.createElement('div');
-      motionGroup.className = 'settings-font-group';
+      motionGroup.className = 'settings-motion-group';
 
       const motionLabel = document.createElement('label');
       motionLabel.className = 'form-label';
@@ -229,26 +229,13 @@ export class SettingsPanel {
       thresholdRow.appendChild(degLabel);
       motionGroup.appendChild(thresholdRow);
 
-      // iOS permission button
-      if (MotionSensor.needsPermissionRequest()) {
-        const permBtn = document.createElement('button');
-        permBtn.className = 'btn btn-secondary btn-sm';
-        permBtn.textContent = 'Grant motion permission';
-        permBtn.style.marginTop = '6px';
-        permBtn.style.display = motionCheck.checked ? '' : 'none';
-        permBtn.addEventListener('click', async () => {
+      motionCheck.addEventListener('change', async () => {
+        if (motionCheck.checked && MotionSensor.needsPermissionRequest()) {
           const granted = await MotionSensor.requestPermission();
-          permBtn.textContent = granted ? 'Permission granted' : 'Permission denied';
-          permBtn.disabled = true;
-        });
-        motionGroup.appendChild(permBtn);
-
-        motionCheck.addEventListener('change', () => {
-          permBtn.style.display = motionCheck.checked ? '' : 'none';
-        });
-      }
-
-      motionCheck.addEventListener('change', () => {
+          if (!granted) {
+            motionCheck.checked = false;
+          }
+        }
         thresholdRow.style.display = motionCheck.checked ? '' : 'none';
         if (this._onMotionEnabledChange) {
           this._onMotionEnabledChange(motionCheck.checked);

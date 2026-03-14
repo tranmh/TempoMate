@@ -4,78 +4,12 @@ import { MotionConfig } from '../../src/js/utils/constants.js';
 
 /**
  * Helper: dispatch a mock deviceorientation event.
- * @param {number} gamma - Tilt angle in degrees
- * @param {number} [beta] - Forward/backward tilt in degrees
+ * @param {number} beta - Tilt angle in degrees
  */
-function fireOrientation(gamma, beta = 0) {
+function fireOrientation(beta) {
   const event = new Event('deviceorientation');
-  event.gamma = gamma;
   event.beta = beta;
   window.dispatchEvent(event);
-}
-
-/**
- * Helper: mock screen.orientation.angle for orientation tests.
- * @param {number} angle - 0=portrait, 90=landscape CCW, 270=landscape CW
- * @returns {Function} cleanup function
- */
-function mockScreenAngle(angle) {
-  const original = Object.getOwnPropertyDescriptor(globalThis, 'screen');
-  Object.defineProperty(globalThis, 'screen', {
-    value: { orientation: { angle, type: angle === 0 ? 'portrait-primary' : 'landscape-primary' } },
-    configurable: true,
-  });
-  return () => {
-    if (original) {
-      Object.defineProperty(globalThis, 'screen', original);
-    } else {
-      delete globalThis.screen;
-    }
-  };
-}
-
-/**
- * Mock Accelerometer class for Generic Sensor API tests.
- */
-class MockAccelerometer {
-  constructor(options = {}) {
-    this.frequency = options.frequency || 60;
-    this.x = 0;
-    this.y = 0;
-    this.z = 0;
-    this._listeners = {};
-    this._started = false;
-  }
-
-  addEventListener(type, handler) {
-    if (!this._listeners[type]) this._listeners[type] = [];
-    this._listeners[type].push(handler);
-  }
-
-  removeEventListener(type, handler) {
-    if (!this._listeners[type]) return;
-    this._listeners[type] = this._listeners[type].filter(h => h !== handler);
-  }
-
-  start() {
-    this._started = true;
-  }
-
-  stop() {
-    this._started = false;
-  }
-
-  _fireReading() {
-    if (this._listeners.reading) {
-      this._listeners.reading.forEach(h => h());
-    }
-  }
-
-  _fireError(error) {
-    if (this._listeners.error) {
-      this._listeners.error.forEach(h => h({ error }));
-    }
-  }
 }
 
 describe('MotionSensor', () => {
@@ -91,7 +25,7 @@ describe('MotionSensor', () => {
       window.DeviceOrientationEvent = class DeviceOrientationEvent extends Event {
         constructor(type, init = {}) {
           super(type, init);
-          this.gamma = init.gamma ?? null;
+          this.beta = init.beta ?? null;
         }
       };
     }
@@ -108,33 +42,15 @@ describe('MotionSensor', () => {
     } else {
       window.DeviceOrientationEvent = originalDOE;
     }
-    // Clean up any Accelerometer mock
-    delete window.Accelerometer;
   });
 
   describe('isSupported()', () => {
     it('returns true when DeviceOrientationEvent exists', () => {
       expect(MotionSensor.isSupported()).toBe(true);
     });
-
-    it('returns true when Accelerometer exists', () => {
-      window.Accelerometer = MockAccelerometer;
-      expect(MotionSensor.isSupported()).toBe(true);
-    });
   });
 
-  describe('getSensorType()', () => {
-    it('returns "legacy" when only DeviceOrientationEvent exists', () => {
-      expect(MotionSensor.getSensorType()).toBe('legacy');
-    });
-
-    it('returns "generic" when Accelerometer exists', () => {
-      window.Accelerometer = MockAccelerometer;
-      expect(MotionSensor.getSensorType()).toBe('generic');
-    });
-  });
-
-  describe('enable/disable lifecycle (legacy)', () => {
+  describe('enable/disable lifecycle', () => {
     it('starts disabled', () => {
       sensor = new MotionSensor({ onTilt: tiltCallback });
       expect(sensor.isEnabled()).toBe(false);
@@ -177,16 +93,10 @@ describe('MotionSensor', () => {
       sensor.disable();
       expect(sensor.isEnabled()).toBe(false);
     });
-
-    it('uses legacy backend when no Accelerometer', () => {
-      sensor = new MotionSensor({ onTilt: tiltCallback });
-      sensor.enable();
-      expect(sensor.getActiveSensorType()).toBe('legacy');
-    });
   });
 
-  describe('tilt detection (legacy)', () => {
-    it('fires left on negative gamma past threshold', () => {
+  describe('tilt detection', () => {
+    it('fires left on negative beta past threshold', () => {
       sensor = new MotionSensor({ onTilt: tiltCallback, threshold: 10 });
       sensor.enable();
 
@@ -194,7 +104,7 @@ describe('MotionSensor', () => {
       expect(tiltCallback).toHaveBeenCalledWith('left');
     });
 
-    it('fires right on positive gamma past threshold', () => {
+    it('fires right on positive beta past threshold', () => {
       sensor = new MotionSensor({ onTilt: tiltCallback, threshold: 10 });
       sensor.enable();
 
@@ -212,19 +122,19 @@ describe('MotionSensor', () => {
       expect(tiltCallback).not.toHaveBeenCalled();
     });
 
-    it('ignores null gamma', () => {
+    it('ignores null beta', () => {
       sensor = new MotionSensor({ onTilt: tiltCallback });
       sensor.enable();
 
       const event = new Event('deviceorientation');
-      event.gamma = null;
+      event.beta = null;
       window.dispatchEvent(event);
 
       expect(tiltCallback).not.toHaveBeenCalled();
     });
   });
 
-  describe('hysteresis (legacy)', () => {
+  describe('hysteresis', () => {
     it('does not re-trigger until device returns to center', () => {
       sensor = new MotionSensor({ onTilt: tiltCallback, threshold: 10 });
       sensor.enable();
@@ -359,216 +269,6 @@ describe('MotionSensor', () => {
     });
   });
 
-  describe('screen orientation axis rotation (legacy)', () => {
-    let restoreScreen;
-
-    afterEach(() => {
-      if (restoreScreen) {
-        restoreScreen();
-        restoreScreen = null;
-      }
-    });
-
-    it('portrait (0°): gamma=left/right tilt', () => {
-      restoreScreen = mockScreenAngle(0);
-      sensor = new MotionSensor({ onTilt: tiltCallback, threshold: 10 });
-      sensor.enable();
-
-      // gamma -15 → left tilt (cos(0)=1, sin(0)=0 → tilt=gamma)
-      fireOrientation(-15, 0);
-      expect(tiltCallback).toHaveBeenCalledWith('left');
-    });
-
-    it('landscape 90° CCW: beta=left/right tilt', () => {
-      restoreScreen = mockScreenAngle(90);
-      sensor = new MotionSensor({ onTilt: tiltCallback, threshold: 10 });
-      sensor.enable();
-
-      // At 90°: cos(90°)=0, sin(90°)=1 → tilt=beta
-      // beta -15 → left tilt
-      fireOrientation(0, -15);
-      expect(tiltCallback).toHaveBeenCalledWith('left');
-    });
-
-    it('landscape 90° CCW: right tilt via beta', () => {
-      restoreScreen = mockScreenAngle(90);
-      sensor = new MotionSensor({ onTilt: tiltCallback, threshold: 10 });
-      sensor.enable();
-
-      fireOrientation(0, 15);
-      expect(tiltCallback).toHaveBeenCalledWith('right');
-    });
-
-    it('landscape 270° CW: beta inverted for left/right', () => {
-      restoreScreen = mockScreenAngle(270);
-      sensor = new MotionSensor({ onTilt: tiltCallback, threshold: 10 });
-      sensor.enable();
-
-      // At 270°: cos(270°)=0, sin(270°)=-1 → tilt=-beta
-      // beta +15 → tilt=-15 → left
-      fireOrientation(0, 15);
-      expect(tiltCallback).toHaveBeenCalledWith('left');
-    });
-
-    it('landscape 90°: gamma ignored, only beta matters', () => {
-      restoreScreen = mockScreenAngle(90);
-      sensor = new MotionSensor({ onTilt: tiltCallback, threshold: 10 });
-      sensor.enable();
-
-      // Large gamma but beta=0 → tilt ≈ 0
-      fireOrientation(-30, 0);
-      expect(tiltCallback).not.toHaveBeenCalled();
-    });
-
-    it('portrait 180° (upside-down): gamma inverted', () => {
-      restoreScreen = mockScreenAngle(180);
-      sensor = new MotionSensor({ onTilt: tiltCallback, threshold: 10 });
-      sensor.enable();
-
-      // At 180°: cos(180°)=-1, sin(180°)=0 → tilt=-gamma
-      // gamma +15 → tilt=-15 → left
-      fireOrientation(15, 0);
-      expect(tiltCallback).toHaveBeenCalledWith('left');
-    });
-
-    it('hysteresis works in landscape', () => {
-      restoreScreen = mockScreenAngle(90);
-      sensor = new MotionSensor({ onTilt: tiltCallback, threshold: 10 });
-      sensor.enable();
-
-      fireOrientation(0, -15);
-      expect(tiltCallback).toHaveBeenCalledTimes(1);
-
-      // Still tilted
-      fireOrientation(0, -20);
-      expect(tiltCallback).toHaveBeenCalledTimes(1);
-
-      // Return to center
-      fireOrientation(0, 0);
-
-      // Tilt right
-      fireOrientation(0, 15);
-      expect(tiltCallback).toHaveBeenCalledTimes(2);
-      expect(tiltCallback).toHaveBeenLastCalledWith('right');
-    });
-  });
-
-  describe('screen orientation axis rotation (accelerometer)', () => {
-    let mockAccel;
-    let restoreScreen;
-
-    beforeEach(() => {
-      mockAccel = null;
-      // Mock Accelerometer that rejects 'screen' ref frame to test manual rotation
-      window.Accelerometer = function(options) {
-        if (options.referenceFrame === 'screen') {
-          throw new Error('screen referenceFrame not supported');
-        }
-        mockAccel = new MockAccelerometer(options);
-        return mockAccel;
-      };
-    });
-
-    afterEach(() => {
-      if (restoreScreen) {
-        restoreScreen();
-        restoreScreen = null;
-      }
-    });
-
-    it('portrait (0°): uses x-axis', () => {
-      restoreScreen = mockScreenAngle(0);
-      sensor = new MotionSensor({ onTilt: tiltCallback, threshold: 10 });
-      sensor.enable();
-
-      mockAccel.x = 2.54;
-      mockAccel._fireReading();
-      expect(tiltCallback).toHaveBeenCalledWith('left');
-    });
-
-    it('landscape 90° CCW: uses y-axis', () => {
-      restoreScreen = mockScreenAngle(90);
-      sensor = new MotionSensor({ onTilt: tiltCallback, threshold: 10 });
-      sensor.enable();
-
-      // At 90°: screenX = x*cos(90°) + y*sin(90°) = y
-      mockAccel.x = 0;
-      mockAccel.y = 2.54;
-      mockAccel._fireReading();
-      expect(tiltCallback).toHaveBeenCalledWith('left');
-    });
-
-    it('landscape 270° CW: uses -y-axis', () => {
-      restoreScreen = mockScreenAngle(270);
-      sensor = new MotionSensor({ onTilt: tiltCallback, threshold: 10 });
-      sensor.enable();
-
-      // At 270°: screenX = x*cos(270°) + y*sin(270°) = -y
-      // y=2.54 → screenX=-2.54 → right tilt
-      mockAccel.x = 0;
-      mockAccel.y = 2.54;
-      mockAccel._fireReading();
-      expect(tiltCallback).toHaveBeenCalledWith('right');
-    });
-  });
-
-  describe('accelerometer screen referenceFrame', () => {
-    let mockAccel;
-    let restoreScreen;
-
-    beforeEach(() => {
-      mockAccel = null;
-      // Mock Accelerometer that accepts 'screen' ref frame
-      window.Accelerometer = function(options) {
-        mockAccel = new MockAccelerometer(options);
-        mockAccel.referenceFrame = options.referenceFrame || 'device';
-        return mockAccel;
-      };
-    });
-
-    afterEach(() => {
-      if (restoreScreen) {
-        restoreScreen();
-        restoreScreen = null;
-      }
-    });
-
-    it('prefers screen referenceFrame', () => {
-      sensor = new MotionSensor({ onTilt: tiltCallback });
-      sensor.enable();
-      expect(mockAccel.referenceFrame).toBe('screen');
-      expect(sensor._accelRefFrame).toBe('screen');
-    });
-
-    it('with screen frame: x-axis works directly in landscape', () => {
-      restoreScreen = mockScreenAngle(90);
-      sensor = new MotionSensor({ onTilt: tiltCallback, threshold: 10 });
-      sensor.enable();
-
-      // With screen referenceFrame, x already points screen-right
-      mockAccel.x = 2.54;
-      mockAccel._fireReading();
-      expect(tiltCallback).toHaveBeenCalledWith('left');
-    });
-
-    it('falls back to device frame if screen throws', () => {
-      let callCount = 0;
-      window.Accelerometer = function(options) {
-        callCount++;
-        if (options.referenceFrame === 'screen') {
-          throw new Error('not supported');
-        }
-        mockAccel = new MockAccelerometer(options);
-        return mockAccel;
-      };
-
-      sensor = new MotionSensor({ onTilt: tiltCallback });
-      sensor.enable();
-      expect(sensor._accelRefFrame).toBe('device');
-      expect(callCount).toBe(2); // tried screen, then device
-    });
-  });
-
   describe('iOS permission', () => {
     it('needsPermissionRequest() returns false by default', () => {
       expect(MotionSensor.needsPermissionRequest()).toBe(false);
@@ -613,345 +313,6 @@ describe('MotionSensor', () => {
       expect(sensor.isEnabled()).toBe(false);
       fireOrientation(-15);
       expect(tiltCallback).not.toHaveBeenCalled();
-    });
-  });
-
-  // --- Generic Sensor API tests ---
-
-  describe('Generic Sensor API (Accelerometer)', () => {
-    let mockAccel;
-
-    beforeEach(() => {
-      // Install MockAccelerometer as global and capture instances
-      mockAccel = null;
-      window.Accelerometer = function(options) {
-        mockAccel = new MockAccelerometer(options);
-        return mockAccel;
-      };
-    });
-
-    it('prefers Generic Sensor when available', () => {
-      sensor = new MotionSensor({ onTilt: tiltCallback });
-      sensor.enable();
-      expect(sensor.getActiveSensorType()).toBe('generic');
-      expect(mockAccel).not.toBeNull();
-      expect(mockAccel._started).toBe(true);
-    });
-
-    it('passes configured frequency to Accelerometer', () => {
-      sensor = new MotionSensor({ onTilt: tiltCallback });
-      sensor.enable();
-      expect(mockAccel.frequency).toBe(MotionConfig.SENSOR_FREQUENCY);
-    });
-
-    it('detects left tilt from accelerometer x', () => {
-      sensor = new MotionSensor({ onTilt: tiltCallback, threshold: 10 });
-      sensor.enable();
-
-      // Positive x → negative gamma (left tilt)
-      // For gamma = -15°: x = -9.81 * sin(-15° * PI/180) ≈ 2.539
-      // But _accelXToGamma negates: gamma = -asin(x/9.81) * (180/PI)
-      // To get gamma = -15, we need x such that -asin(x/9.81)*180/PI = -15
-      // asin(x/9.81)*180/PI = 15, x/9.81 = sin(15°) ≈ 0.2588, x ≈ 2.54
-      mockAccel.x = 2.54;
-      mockAccel._fireReading();
-      expect(tiltCallback).toHaveBeenCalledWith('left');
-    });
-
-    it('detects right tilt from accelerometer x', () => {
-      sensor = new MotionSensor({ onTilt: tiltCallback, threshold: 10 });
-      sensor.enable();
-
-      // Negative x → positive gamma (right tilt)
-      mockAccel.x = -2.54;
-      mockAccel._fireReading();
-      expect(tiltCallback).toHaveBeenCalledWith('right');
-    });
-
-    it('hysteresis works with accelerometer', () => {
-      sensor = new MotionSensor({ onTilt: tiltCallback, threshold: 10 });
-      sensor.enable();
-
-      // Trigger left (gamma ≈ -15°)
-      mockAccel.x = 2.54;
-      mockAccel._fireReading();
-      expect(tiltCallback).toHaveBeenCalledTimes(1);
-
-      // Still tilted — no re-trigger
-      mockAccel.x = 3.0;
-      mockAccel._fireReading();
-      expect(tiltCallback).toHaveBeenCalledTimes(1);
-
-      // Return to center (gamma ≈ 0°)
-      mockAccel.x = 0;
-      mockAccel._fireReading();
-
-      // Trigger left again
-      mockAccel.x = 2.54;
-      mockAccel._fireReading();
-      expect(tiltCallback).toHaveBeenCalledTimes(2);
-    });
-
-    it('handles accelerometer x values at gravity limits', () => {
-      sensor = new MotionSensor({ onTilt: tiltCallback, threshold: 10 });
-      sensor.enable();
-
-      // x at full gravity (device on its side)
-      mockAccel.x = 9.81;
-      mockAccel._fireReading();
-      expect(tiltCallback).toHaveBeenCalledWith('left');
-    });
-
-    it('clamps accelerometer values beyond gravity', () => {
-      sensor = new MotionSensor({ onTilt: tiltCallback, threshold: 10 });
-      sensor.enable();
-
-      // x beyond gravity (shouldn't produce NaN)
-      mockAccel.x = 15;
-      mockAccel._fireReading();
-      expect(tiltCallback).toHaveBeenCalledWith('left');
-    });
-
-    it('stops accelerometer on disable()', () => {
-      sensor = new MotionSensor({ onTilt: tiltCallback });
-      sensor.enable();
-      expect(mockAccel._started).toBe(true);
-
-      sensor.disable();
-      expect(mockAccel._started).toBe(false);
-      expect(sensor.getActiveSensorType()).toBeNull();
-    });
-
-    it('stops accelerometer on destroy()', () => {
-      sensor = new MotionSensor({ onTilt: tiltCallback });
-      sensor.enable();
-      sensor.destroy();
-      expect(mockAccel._started).toBe(false);
-    });
-
-    describe('error fallback', () => {
-      let warnSpy;
-      beforeEach(() => { warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {}); });
-      afterEach(() => { warnSpy.mockRestore(); });
-
-      it('falls back to legacy on accelerometer error', () => {
-        sensor = new MotionSensor({ onTilt: tiltCallback });
-        sensor.enable();
-        expect(sensor.getActiveSensorType()).toBe('generic');
-
-        // Simulate error
-        mockAccel._fireError({ name: 'NotReadableError', message: 'Sensor not available' });
-        expect(sensor.getActiveSensorType()).toBe('legacy');
-
-        // Legacy should now work
-        fireOrientation(-15);
-        expect(tiltCallback).toHaveBeenCalledWith('left');
-      });
-
-      it('accelerometer readings no longer fire after fallback', () => {
-        sensor = new MotionSensor({ onTilt: tiltCallback, threshold: 10 });
-        sensor.enable();
-
-        // Simulate error → fallback
-        mockAccel._fireError({ name: 'NotReadableError' });
-
-        // Old accelerometer reading shouldn't do anything
-        // (listeners were removed during fallback)
-        mockAccel.x = 5;
-        mockAccel._fireReading();
-        expect(tiltCallback).not.toHaveBeenCalled();
-      });
-    });
-
-    describe('constructor failure fallback', () => {
-      it('falls back to legacy when Accelerometer constructor throws', () => {
-        window.Accelerometer = function() {
-          throw new Error('Accelerometer not available');
-        };
-
-        sensor = new MotionSensor({ onTilt: tiltCallback });
-        sensor.enable();
-        expect(sensor.getActiveSensorType()).toBe('legacy');
-
-        // Legacy should work
-        fireOrientation(-15);
-        expect(tiltCallback).toHaveBeenCalledWith('left');
-      });
-    });
-  });
-
-  describe('permission handling with Generic Sensor', () => {
-    let origPerms;
-
-    beforeEach(() => {
-      origPerms = navigator.permissions;
-    });
-
-    afterEach(() => {
-      Object.defineProperty(navigator, 'permissions', {
-        value: origPerms,
-        configurable: true,
-      });
-    });
-
-    it('requestPermission() checks accelerometer permission', async () => {
-      const mockQuery = jest.fn().mockResolvedValue({ state: 'granted' });
-      Object.defineProperty(navigator, 'permissions', {
-        value: { query: mockQuery },
-        configurable: true,
-      });
-
-      const result = await MotionSensor.requestPermission();
-      expect(result).toBe(true);
-      expect(mockQuery).toHaveBeenCalledWith({ name: 'accelerometer' });
-    });
-
-    it('requestPermission() returns false when accelerometer permission is denied', async () => {
-      // BUG: 'denied' state falls through to iOS check, then returns true
-      const mockQuery = jest.fn().mockResolvedValue({ state: 'denied' });
-      Object.defineProperty(navigator, 'permissions', {
-        value: { query: mockQuery },
-        configurable: true,
-      });
-
-      const result = await MotionSensor.requestPermission();
-      expect(result).toBe(false);
-    });
-  });
-
-  describe('CSS rotation offset', () => {
-    it('setCssRotationOffset() rotates tilt axis (legacy)', () => {
-      sensor = new MotionSensor({ onTilt: tiltCallback, threshold: 10 });
-      sensor.setCssRotationOffset(90);
-      sensor.enable();
-
-      // With 90° CSS offset in portrait (screen angle 0):
-      // tilt = gamma*cos(90°) + beta*sin(90°) = beta
-      // So beta -15 → left tilt
-      fireOrientation(0, -15);
-      expect(tiltCallback).toHaveBeenCalledWith('left');
-    });
-
-    it('setCssRotationOffset(90) makes gamma ignored (legacy)', () => {
-      sensor = new MotionSensor({ onTilt: tiltCallback, threshold: 10 });
-      sensor.setCssRotationOffset(90);
-      sensor.enable();
-
-      // Pure gamma should have no effect at 90° offset
-      fireOrientation(-30, 0);
-      expect(tiltCallback).not.toHaveBeenCalled();
-    });
-
-    it('setCssRotationOffset(0) restores default axis (legacy)', () => {
-      sensor = new MotionSensor({ onTilt: tiltCallback, threshold: 10 });
-      sensor.setCssRotationOffset(90);
-      sensor.enable();
-
-      // Beta triggers with 90° offset
-      fireOrientation(0, -15);
-      expect(tiltCallback).toHaveBeenCalledTimes(1);
-
-      // Return to center
-      fireOrientation(0, 0);
-
-      // Reset offset
-      sensor.setCssRotationOffset(0);
-
-      // Now gamma should trigger again
-      fireOrientation(-15, 0);
-      expect(tiltCallback).toHaveBeenCalledTimes(2);
-    });
-
-    it('setCssRotationOffset() rotates accelerometer axis (device frame)', () => {
-      let mockAccel;
-      window.Accelerometer = function(options) {
-        if (options.referenceFrame === 'screen') {
-          throw new Error('screen referenceFrame not supported');
-        }
-        mockAccel = new MockAccelerometer(options);
-        return mockAccel;
-      };
-
-      sensor = new MotionSensor({ onTilt: tiltCallback, threshold: 10 });
-      sensor.setCssRotationOffset(90);
-      sensor.enable();
-
-      // At 90° offset: screenX = x*cos(90°) + y*sin(90°) = y
-      mockAccel.x = 0;
-      mockAccel.y = 2.54;
-      mockAccel._fireReading();
-      expect(tiltCallback).toHaveBeenCalledWith('left');
-    });
-
-    it('setCssRotationOffset() forces manual rotation for screen-frame accelerometer', () => {
-      let mockAccel;
-      window.Accelerometer = function(options) {
-        mockAccel = new MockAccelerometer(options);
-        return mockAccel;
-      };
-
-      sensor = new MotionSensor({ onTilt: tiltCallback, threshold: 10 });
-      sensor.enable();
-      expect(sensor._accelRefFrame).toBe('screen');
-
-      // With CSS offset, screen ref frame alone is insufficient
-      sensor.setCssRotationOffset(90);
-      mockAccel.x = 0;
-      mockAccel.y = 2.54;
-      mockAccel._fireReading();
-      expect(tiltCallback).toHaveBeenCalledWith('left');
-    });
-  });
-
-  describe('defensive null guards', () => {
-    let mockAccel;
-
-    beforeEach(() => {
-      mockAccel = null;
-      window.Accelerometer = function(options) {
-        mockAccel = new MockAccelerometer(options);
-        return mockAccel;
-      };
-    });
-
-    it('_onAccelReading does not crash if accelerometer is null', () => {
-      // BUG: If a queued reading event fires after error fallback
-      // nulled the accelerometer, accessing this._accelerometer.x crashes
-      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
-      sensor = new MotionSensor({ onTilt: tiltCallback, threshold: 10 });
-      sensor.enable();
-      expect(sensor.getActiveSensorType()).toBe('generic');
-
-      // Simulate: error fires and cleans up accelerometer
-      mockAccel._fireError({ name: 'NotReadableError' });
-      expect(sensor.getActiveSensorType()).toBe('legacy');
-
-      // Now simulate a stale reading callback (bound method called directly)
-      // This should not throw
-      expect(() => sensor._onAccelReading()).not.toThrow();
-      expect(tiltCallback).not.toHaveBeenCalled();
-      warnSpy.mockRestore();
-    });
-
-    it('_tryGenericSensor cleans up listeners when start() throws', () => {
-      // BUG: If start() throws, listeners are left attached to the
-      // orphaned accelerometer without being removed
-      let createdAccel = null;
-      window.Accelerometer = function(options) {
-        createdAccel = new MockAccelerometer(options);
-        createdAccel.start = () => { throw new Error('SecurityError'); };
-        return createdAccel;
-      };
-
-      sensor = new MotionSensor({ onTilt: tiltCallback });
-      sensor.enable();
-
-      // Should have fallen back to legacy
-      expect(sensor.getActiveSensorType()).toBe('legacy');
-
-      // The orphaned accelerometer should have no listeners left
-      expect(createdAccel._listeners.reading?.length ?? 0).toBe(0);
-      expect(createdAccel._listeners.error?.length ?? 0).toBe(0);
     });
   });
 });
