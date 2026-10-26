@@ -284,13 +284,13 @@ body {
   align-items: center;
   gap: 8px;
   font-size: 0.7rem;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   flex-shrink: 0;
   padding: 4px 0;
 }
 
 .app-footer a {
-  color: var(--text-muted);
+  color: var(--text-secondary);
   text-decoration: none;
 }
 

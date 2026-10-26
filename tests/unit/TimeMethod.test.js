@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
 import { TimeMethod } from '../../src/js/engine/methods/TimeMethod.js';
 import { PlayerState } from '../../src/js/state/PlayerState.js';
-import { TimingMethodType } from '../../src/js/utils/constants.js';
+import { TimingMethod } from '../../src/js/engine/TimingMethod.js';
+import { TimingMethodType, Player } from '../../src/js/utils/constants.js';
 
 describe('TimeMethod', () => {
   let method;
@@ -52,5 +53,47 @@ describe('TimeMethod', () => {
 
   it('isExpired returns false with time remaining', () => {
     expect(method.isExpired(player)).toBe(false);
+  });
+});
+
+describe('TimingMethod base config', () => {
+  it('keeps the given config', () => {
+    const config = { timeMs: 1000 };
+    expect(new TimingMethod(config).config).toBe(config);
+  });
+
+  it('defaults to an empty config', () => {
+    expect(new TimingMethod().config).toEqual({});
+    expect(new TimingMethod(null).config).toEqual({});
+  });
+});
+
+describe('PlayerState', () => {
+  it('assigns white to the left player and black to the right player', () => {
+    expect(new PlayerState(Player.LEFT).color).toBe('white');
+    expect(new PlayerState(Player.RIGHT).color).toBe('black');
+  });
+
+  it('starts not in delay and not started', () => {
+    const state = new PlayerState(Player.LEFT);
+    expect(state.inDelay).toBe(false);
+    expect(state.hasStarted).toBe(false);
+  });
+
+  it('init resets inDelay and hasStarted', () => {
+    const state = new PlayerState(Player.LEFT);
+    state.inDelay = true;
+    state.hasStarted = true;
+    state.init({ timeMs: 1000 });
+    expect(state.inDelay).toBe(false);
+    expect(state.hasStarted).toBe(false);
+  });
+
+  it('init sets byo-yomi moments from config, defaulting to 0', () => {
+    const state = new PlayerState(Player.LEFT);
+    state.init({ timeMs: 1000, byoMoments: 5 });
+    expect(state.byoMomentsRemaining).toBe(5);
+    state.init({ timeMs: 1000 });
+    expect(state.byoMomentsRemaining).toBe(0);
   });
 });
